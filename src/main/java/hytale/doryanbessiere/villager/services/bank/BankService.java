@@ -1,12 +1,16 @@
 package hytale.doryanbessiere.villager.services.bank;
 
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import hytale.doryanbessiere.villager.dto.PlayerData;
 import hytale.doryanbessiere.villager.dto.economy.bank.BankData;
 import hytale.doryanbessiere.villager.dto.economy.bank.BankType;
 import hytale.doryanbessiere.villager.dto.economy.bank.account.BankAccountData;
 import hytale.doryanbessiere.villager.dto.economy.bank.account.BankTransactionData;
+import hytale.doryanbessiere.villager.dto.economy.bank.voucher.PaymentVoucherData;
 import hytale.doryanbessiere.villager.exceptions.bank.BankException;
 import hytale.doryanbessiere.villager.exceptions.bank.BankNameAlreadyExistsException;
 import hytale.doryanbessiere.villager.exceptions.bank.BankNotFoundException;
@@ -15,11 +19,14 @@ import hytale.doryanbessiere.villager.exceptions.bank.account.BankAccountNotEmpt
 import hytale.doryanbessiere.villager.exceptions.bank.account.BankAccountNotFoundException;
 import hytale.doryanbessiere.villager.exceptions.bank.account.transaction.InsufficientFundsException;
 import hytale.doryanbessiere.villager.exceptions.bank.account.transaction.AmountMustBePositiveException;
+import hytale.doryanbessiere.villager.exceptions.bank.account.voucher.VoucherItemInvalidException;
 import hytale.doryanbessiere.villager.exceptions.player.PlayerNotFoundException;
+import hytale.doryanbessiere.villager.items.PaymentVoucherItem;
 import hytale.doryanbessiere.villager.repository.adapter.file.bank.BankRepositoryFile;
 import hytale.doryanbessiere.villager.repository.bank.BankAccountRepository;
 import hytale.doryanbessiere.villager.repository.bank.BankRepository;
 import hytale.doryanbessiere.villager.services.PlayerService;
+import hytale.doryanbessiere.villager.utils.Utils;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
@@ -33,10 +40,9 @@ public class BankService {
     /**
      * Create a new bank
      *
-     * @param name bank name
-     * @param type bank type
+     * @param name      bank name
+     * @param type      bank type
      * @param playerRef creator
-     *
      * @throws BankNameAlreadyExistsException if a bank with the same name already exists
      */
     public static void createBank(String name, BankType type, PlayerRef playerRef) throws BankException {
@@ -55,7 +61,6 @@ public class BankService {
      *
      * @param bankId bank id
      * @return all accounts of this bank
-     *
      * @throws BankNotFoundException if the bank does not exist
      */
     public static List<BankAccountData> getAccountsById(UUID bankId) throws BankException {
@@ -70,12 +75,11 @@ public class BankService {
     /**
      * Open a bank account at a bank by name for a player
      *
-     * @param playerRef player
-     * @param bankName bank name
+     * @param playerRef   player
+     * @param bankName    bank name
      * @param accountName account name
      * @return bank data
-     *
-     * @throws BankNotFoundException if the bank does not exist
+     * @throws BankNotFoundException                 if the bank does not exist
      * @throws BankAccountNameAlreadyExistsException if the player already has an account with this name in this bank
      */
     public static BankData openAccount(PlayerRef playerRef, String bankName, String accountName) throws BankException {
@@ -97,11 +101,10 @@ public class BankService {
     /**
      * Close a bank account at a bank by name for a player
      *
-     * @param playerRef player
-     * @param bankName bank name
+     * @param playerRef       player
+     * @param bankName        bank name
      * @param bankAccountName bank account name
-     *
-     * @throws BankNotFoundException if the bank does not exist
+     * @throws BankNotFoundException        if the bank does not exist
      * @throws BankAccountNotFoundException if the account does not exist
      * @throws BankAccountNotEmptyException if the account balance is not 0
      */
@@ -121,16 +124,15 @@ public class BankService {
     /**
      * Deposit money from player's wallet to a bank account.
      *
-     * @param playerRef player
-     * @param bankName bank name
+     * @param playerRef       player
+     * @param bankName        bank name
      * @param bankAccountName bank account name
-     * @param amount amount to deposit
-     *
-     * @throws BankNotFoundException if the bank does not exist
-     * @throws BankAccountNotFoundException if the bank account does not exist
+     * @param amount          amount to deposit
+     * @throws BankNotFoundException         if the bank does not exist
+     * @throws BankAccountNotFoundException  if the bank account does not exist
      * @throws AmountMustBePositiveException if amount must be positive
-     * @throws InsufficientFundsException if the player balance is insufficient
-     * @throws PlayerNotFoundException if the player does not exist
+     * @throws InsufficientFundsException    if the player balance is insufficient
+     * @throws PlayerNotFoundException       if the player does not exist
      */
     public static void depositToAccount(@NonNull PlayerRef playerRef, String bankName, String bankAccountName, long amount) throws BankException {
         BankData bankData = getBankByName(bankName);
@@ -158,16 +160,15 @@ public class BankService {
     /**
      * Withdraw money from a bank account to player's wallet.
      *
-     * @param playerRef player
-     * @param bankName bank name
+     * @param playerRef       player
+     * @param bankName        bank name
      * @param bankAccountName bank account name
-     * @param amount amount to withdraw
-     *
-     * @throws BankNotFoundException if the bank does not exist
-     * @throws BankAccountNotFoundException if the bank account does not exist
+     * @param amount          amount to withdraw
+     * @throws BankNotFoundException         if the bank does not exist
+     * @throws BankAccountNotFoundException  if the bank account does not exist
      * @throws AmountMustBePositiveException if amount must be positive
-     * @throws InsufficientFundsException if the bank account balance is insufficient
-     * @throws PlayerNotFoundException if the player does not exist
+     * @throws InsufficientFundsException    if the bank account balance is insufficient
+     * @throws PlayerNotFoundException       if the player does not exist
      */
     public static void withdrawFromAccount(@NonNull PlayerRef playerRef, String bankName, String bankAccountName, long amount) {
         BankData bankData = getBankByName(bankName);
@@ -188,15 +189,85 @@ public class BankService {
                 + "' at bank '" + bankData.getName() + "' by player '" + playerRef.getUsername() + "'");
     }
 
+    public static void createPaymentVoucher(@NonNull PlayerRef playerRef, String bankName, String bankAccountName, long amount) {
+        BankData bankData = getBankByName(bankName);
+        BankAccountData bankAccountData = getBankAccountByName(bankData.getId(), playerRef.getUuid(), bankAccountName);
+
+        if (amount <= 0)
+            throw new AmountMustBePositiveException(amount);
+
+        if (bankAccountData.getBalance() < amount)
+            throw new InsufficientFundsException(bankAccountData.getBalance(), amount);
+
+        // Get player
+        Player player = Utils.getPlayer(playerRef);
+
+        // Give voucher item to player
+        ItemStack voucherItem = PaymentVoucherItem.createPaymentVoucher(bankAccountData, amount);
+
+        // Add the voucher to the player's inventory (hotbar first) (1/2)
+        player.getInventory().getCombinedHotbarFirst().addItemStack(voucherItem);
+
+        // Deduct amount from bank account (2/2)
+        BankTransactionData transactionData = new BankTransactionData(bankAccountData.getId(), -amount);
+        bankAccountData.addTransaction(transactionData);
+        BankService.saveBankAccount(bankData, bankAccountData);
+    }
+
+    public static void depositPaymentVoucher(@NonNull PlayerRef playerRef, String bankName, String bankAccountName, ItemStack voucherItem) {
+        BankData bankData = getBankByName(bankName);
+        BankAccountData bankAccountData = getBankAccountByName(bankData.getId(), playerRef.getUuid(), bankAccountName);
+        Player player = Utils.getPlayer(playerRef);
+        PaymentVoucherData paymentVoucherData = PaymentVoucherItem.getPaymentVoucher(voucherItem);
+
+        if(paymentVoucherData.getAmount() <= 0)
+            throw new AmountMustBePositiveException(paymentVoucherData.getAmount());
+
+        // Create transaction to add amount to the bank account
+        BankTransactionData transactionData = paymentVoucherData.toTransaction();
+
+        // Add transaction to bank account
+        bankAccountData.addTransaction(transactionData);
+
+        // Save bank account
+        BankService.saveBankAccount(bankData, bankAccountData);
+
+        // Remove the voucher from the player's hand
+        player.getInventory().getCombinedHotbarFirst().removeItemStack(voucherItem);
+    }
+
+    public static void debugPaymentVouchers(@NonNull PlayerRef playerRef) {
+        Player player = Utils.getPlayer(playerRef);
+        ItemStack itemInHand = player.getInventory().getItemInHand();
+        if (itemInHand != null &&
+                itemInHand.getItemId() == "PaymentVoucher" &&
+                itemInHand.getMetadata() != null) {
+            playerRef.sendMessage(Message.raw("Bank Account ID: " + itemInHand.getMetadata().getString("bankAccountId")));
+            playerRef.sendMessage(Message.raw("Amount: " + itemInHand.getMetadata().getString("amount")));
+        } else {
+            playerRef.sendMessage(Message.raw("No valid Payment Voucher in hand."));
+            // Debug info
+            if (itemInHand == null) {
+                playerRef.sendMessage(Message.raw("Item in hand is null."));
+            } else {
+                playerRef.sendMessage(Message.raw("Item ID: " + itemInHand.getItemId()));
+                if (itemInHand.getMetadata() == null) {
+                    playerRef.sendMessage(Message.raw("Item metadata is null."));
+                } else {
+                    playerRef.sendMessage(Message.raw("Item has metadata."));
+                }
+            }
+        }
+    }
+
     /**
      * Get a bank account by name for a player at a bank
      *
-     * @param bankId bank id
-     * @param ownerId owner id
+     * @param bankId      bank id
+     * @param ownerId     owner id
      * @param accountName account name
      * @return bank account data
-     *
-     * @throws BankNotFoundException if the bank does not exist
+     * @throws BankNotFoundException        if the bank does not exist
      * @throws BankAccountNotFoundException if the account does not exist
      */
     public static BankAccountData getBankAccountByName(UUID bankId, UUID ownerId, String accountName) throws BankException {
@@ -223,7 +294,6 @@ public class BankService {
      *
      * @param bankName bank name
      * @return bank data
-     *
      * @throws BankNotFoundException if the bank does not exist
      */
     public static BankData getBankByName(String bankName) throws BankException {
