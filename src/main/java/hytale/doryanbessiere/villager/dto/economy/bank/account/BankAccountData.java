@@ -1,6 +1,7 @@
 package hytale.doryanbessiere.villager.dto.economy.bank.account;
 
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import hytale.doryanbessiere.villager.exceptions.bank.account.transaction.InsufficientFundsException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,8 +23,23 @@ public class BankAccountData {
         this.accountName = accountName;
     }
 
+    /**
+     * Add a transaction to the account (deposit/withdrawal), it's not a logic system here
+     *
+     * @param transaction
+     */
     public void addTransaction(BankTransactionData transaction) {
+        // Check for insufficient funds (withdrawal)
+        if(transaction.getAmount() < 0
+                && getBalance() + transaction.getAmount() < 0) {
+            throw new InsufficientFundsException(this.getBalance(), transaction.getAmount());
+        }
+
         this.transactions.add(transaction);
+    }
+
+    public List<BankTransactionData> getTransactions() {
+        return transactions;
     }
 
     public long getBalance() {

@@ -26,8 +26,6 @@ public class PlayerRepositoryFile extends PlayerRepository {
 
     @Override
     public void create(PlayerData data) {
-        if (existById(data.getId()))
-            return;
         set(data);
     }
 

@@ -1,9 +1,12 @@
 package hytale.doryanbessiere.villager.services;
 
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import hytale.doryanbessiere.villager.exceptions.player.PlayerNotFoundException;
 import hytale.doryanbessiere.villager.repository.adapter.file.PlayerRepositoryFile;
 import hytale.doryanbessiere.villager.dto.PlayerData;
 import hytale.doryanbessiere.villager.repository.PlayerRepository;
+
+import java.util.UUID;
 
 public class PlayerService {
 
@@ -14,31 +17,42 @@ public class PlayerService {
      *
      * @param playerRef
      */
-    public static void updatePlayer(PlayerRef playerRef) {
-        if(!playerRepository.existById(playerRef.getUuid().toString())) {
-            playerRepository.create(new PlayerData(playerRef));
-            return;
+    public static PlayerData findPlayerDataOrCreate(PlayerRef playerRef) {
+        PlayerData playerData = playerRepository.findById(playerRef.getUuid());
+        if(playerData == null) {
+            playerData = new PlayerData(playerRef);
+            savePlayerData(playerData);
         }
-        playerRepository.set(new PlayerData(playerRef));
+        return playerData;
+    }
+
+    public static void savePlayerData(PlayerData playerData) {
+        playerRepository.set(playerData);
     }
 
     /**
-     * Return the player data by uuid
+     * Return the player data by UUID
      *
-     * @param uuid
+     * @param uuid the UUID of the player
      * @return
+     * @throws PlayerNotFoundException if the player is not found
      */
-    public static PlayerData getPlayerData(String uuid) {
-        return playerRepository.findById(uuid);
+    public static PlayerData getPlayerData(UUID uuid) {
+        PlayerData playerData = playerRepository.findById(uuid);
+        if(playerData == null)
+            throw new PlayerNotFoundException(uuid);
+
+        return playerData;
     }
 
     /**
      * Return the player data by PlayerRef
      *
-     * @param playerRef
+     * @param playerRef the player reference of Hytale
      * @return
+     * @throws PlayerNotFoundException if the player is not found
      */
     public static PlayerData getPlayerData(PlayerRef playerRef) {
-        return getPlayerData(playerRef.getUuid().toString());
+        return getPlayerData(playerRef.getUuid());
     }
 }

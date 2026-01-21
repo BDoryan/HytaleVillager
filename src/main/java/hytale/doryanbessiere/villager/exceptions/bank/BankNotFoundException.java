@@ -1,7 +1,7 @@
-package hytale.doryanbessiere.villager.exceptions;
+package hytale.doryanbessiere.villager.exceptions.bank;
 
-public class BankNotFoundException extends RuntimeException {
-    private String bankName;
+public class BankNotFoundException extends BankException {
+    private final String bankName;
 
     public BankNotFoundException(String bankName) {
         super("Bank with name '" + bankName + "' not found.");

@@ -13,15 +13,13 @@ import com.hypixel.hytale.server.core.command.system.basecommands.AbstractComman
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import hytale.doryanbessiere.villager.HytaleVillager;
 import hytale.doryanbessiere.villager.dto.economy.bank.BankData;
 import hytale.doryanbessiere.villager.dto.economy.bank.BankType;
-import hytale.doryanbessiere.villager.exceptions.BankNameAlreadyExistException;
+import hytale.doryanbessiere.villager.exceptions.bank.BankNameAlreadyExistsException;
 import hytale.doryanbessiere.villager.services.bank.BankService;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.jspecify.annotations.NonNull;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -137,7 +135,7 @@ public class BankCommand extends AbstractCommandCollection {
                 try {
                     BankService.createBank(name, type, playerRef);
                     sender.sendMessage(Message.raw("Bank '" + name + "' of type '" + type + "' created successfully."));
-                } catch (BankNameAlreadyExistException e) {
+                } catch (BankNameAlreadyExistsException e) {
                     sender.sendMessage(Message.raw("A bank with the name '" + name + "' already exists."));
                 }
             } catch (IllegalArgumentException e) {

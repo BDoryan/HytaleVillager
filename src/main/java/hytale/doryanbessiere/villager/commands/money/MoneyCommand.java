@@ -11,12 +11,12 @@ import com.hypixel.hytale.server.core.command.system.basecommands.CommandBase;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import hytale.doryanbessiere.villager.HytaleVillager;
 import hytale.doryanbessiere.villager.dto.PlayerData;
 import hytale.doryanbessiere.villager.services.PlayerService;
 import hytale.doryanbessiere.villager.utils.Utils;
 
 import javax.annotation.Nonnull;
+import java.util.UUID;
 
 /**
  * /money | To get your balance (player only)
@@ -24,7 +24,7 @@ import javax.annotation.Nonnull;
  */
 public class MoneyCommand extends AbstractPlayerCommand {
 
-    private static long getBalance(String uuid) {
+    private static long getBalance(UUID uuid) {
         PlayerData playerData = PlayerService.getPlayerData(uuid);
         return playerData.getBalance();
     }
@@ -41,7 +41,7 @@ public class MoneyCommand extends AbstractPlayerCommand {
      */
     @Override
     protected void execute(@Nonnull CommandContext context, @Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
-        long balance = getBalance(playerRef.getUuid().toString());
+        long balance = getBalance(playerRef.getUuid());
         context.sender().sendMessage(Message.raw("Your balance is: " + balance + " coins."));
     }
 
@@ -78,7 +78,7 @@ public class MoneyCommand extends AbstractPlayerCommand {
 
             PlayerData playerData = PlayerService.getPlayerData(targetPlayerRef);
             playerData.setBalance(Long.max(0, absolute ? amount : playerData.getBalance() + amount));
-            HytaleVillager.playerRepository.set(playerData);
+            PlayerService.savePlayerData(playerData);
 
             context.sender().sendMessage(Message.raw("Updated " + targetPlayerRef.getUsername() + "'s balance by " + amount + " coins."));
         }
@@ -98,7 +98,7 @@ public class MoneyCommand extends AbstractPlayerCommand {
         @Override
         protected void executeSync(@Nonnull CommandContext context) {
             PlayerRef targetPlayerRef = (PlayerRef) this.targetPlayerArg.get(context);
-            String targetUuid = targetPlayerRef.getUuid().toString();
+            UUID targetUuid = targetPlayerRef.getUuid();
 
             long balance = getBalance(targetUuid);
             context.sender().sendMessage(Message.raw("Player " + targetPlayerRef.getUsername() + " has a balance of: " + balance + " coins."));

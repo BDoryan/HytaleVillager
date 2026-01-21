@@ -15,9 +15,6 @@ public class HytaleVillager extends JavaPlugin {
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     private static HytaleVillager instance;
 
-    public static PlayerRepository playerRepository;
-    public static BankRepository bankRepository;
-
     public static HytaleVillager instance() {
         return instance;
     }

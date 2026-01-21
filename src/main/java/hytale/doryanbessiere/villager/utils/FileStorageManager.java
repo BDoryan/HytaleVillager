@@ -1,18 +1,28 @@
 package hytale.doryanbessiere.villager.utils;
 
-import com.google.gson.Gson;
+import com.google.gson.*;
 import hytale.doryanbessiere.villager.HytaleVillager;
 
 import java.io.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public class FileStorageManager<T> {
 
     private final File storageDir;
-    private final Gson gson = new Gson();
+    private final Gson gson;
 
     public FileStorageManager(String storageDir) {
         this.storageDir = new File(storageDir);
+        this.gson = new GsonBuilder()
+                .registerTypeAdapter(LocalDateTime.class,
+                        (JsonSerializer<LocalDateTime>) (src, type, ctx) ->
+                                new JsonPrimitive(src.toString()))
+                .registerTypeAdapter(LocalDateTime.class,
+                        (JsonDeserializer<LocalDateTime>) (json, type, ctx) ->
+                                LocalDateTime.parse(json.getAsString()))
+                .create();
+
         if (!this.storageDir.exists()) {
             HytaleVillager.logger().atInfo().log("Creating storage directory at: " + this.storageDir.getAbsolutePath());
             if (!this.storageDir.mkdirs())

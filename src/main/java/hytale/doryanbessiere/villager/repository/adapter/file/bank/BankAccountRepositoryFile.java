@@ -1,5 +1,6 @@
 package hytale.doryanbessiere.villager.repository.adapter.file.bank;
 
+import com.hypixel.hytale.logger.HytaleLogger;
 import hytale.doryanbessiere.villager.HytaleVillager;
 import hytale.doryanbessiere.villager.dto.economy.bank.account.BankAccountData;
 import hytale.doryanbessiere.villager.repository.bank.BankAccountRepository;
@@ -10,6 +11,7 @@ import java.util.UUID;
 
 public class BankAccountRepositoryFile extends BankAccountRepository {
 
+    private final HytaleLogger logger = HytaleLogger.forEnclosingClass();
     private final FileStorageManager<BankAccountData> storage;
 
     public BankAccountRepositoryFile(UUID bankId) {
@@ -43,8 +45,12 @@ public class BankAccountRepositoryFile extends BankAccountRepository {
 
     @Override
     public BankAccountData findAccountByName(UUID ownerId, String accountName) {
-        HytaleVillager.logger().atInfo().log(findAll().size() + " accounts found.");
-        return findAll().stream()
+        logger.atInfo().log("Searching for account with name '" + accountName + "' for owner '" + ownerId + "'");
+
+        List<BankAccountData> accounts = findAll();
+        logger.atInfo().log("Total accounts found: " + accounts.size());
+
+        return accounts.stream()
                 .filter(accountData -> accountData.getOwnerId().equals(ownerId) && accountData.getAccountName().equalsIgnoreCase(accountName))
                 .findFirst()
                 .orElse(null);
