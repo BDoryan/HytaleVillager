@@ -1,0 +1,8 @@
+villager.commands.money.desc=Affiche le solde actuel de votre argent.
+villager.commands.money.balance.self=Solde\u00a0: {amount}
+
+villager.commands.money.set.desc=Permet de définir le solde d'argent d'un joueur.
+villager.commands.money.set.success=Le solde de {username} a été défini à {amount}.
+
+villager.commands.money.arg.amount=Montant d'argent
+villager.commands.money.arg.player=Joueur ciblé

@@ -1,0 +1,18 @@
+{
+  "Group": "ExampleGroup",
+  "Name": "ExamplePlugin",
+  "Version": "0.1.0",
+  "Description": "An example plugin for Hytale!",
+  "Authors": [
+    {
+      "Name": "It's you!"
+    }
+  ],
+  "Website": "",
+  "ServerVersion": "*",
+  "Dependencies": {},
+  "OptionalDependencies": {},
+  "DisabledByDefault": false,
+  "IncludesAssetPack": true,
+  "Main": "hytale.doryanbessiere.analytics.HytaleAnalytics"
+}
