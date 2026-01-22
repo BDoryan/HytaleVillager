@@ -16,14 +16,13 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import hytale.doryanbessiere.villager.dto.economy.bank.BankData;
 import hytale.doryanbessiere.villager.dto.economy.bank.BankType;
 import hytale.doryanbessiere.villager.exceptions.bank.BankNameAlreadyExistsException;
+import hytale.doryanbessiere.villager.exceptions.bank.BankNotFoundException;
 import hytale.doryanbessiere.villager.services.bank.BankService;
-import hytale.doryanbessiere.villager.utils.hytale.entity.NpcBuilder;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -46,6 +45,7 @@ public class BankCommand extends AbstractCommandCollection {
         // Bank commands
         this.addSubCommand(new BankInfoCommand());
         this.addSubCommand(new BankCreateCommand());
+        this.addSubCommand(new BankDeleteCommand());
 
         // Account commands
         this.addSubCommand(new BankAccountCommand());
@@ -79,14 +79,14 @@ public class BankCommand extends AbstractCommandCollection {
         }
     }
 
-    class DeleteBankCommand extends AbstractAsyncCommand {
+    class BankDeleteCommand extends AbstractAsyncCommand {
 
         private final RequiredArg<String> bankNameArg = this.withRequiredArg("name", "Name of the bank to delete", ArgTypes.STRING);
 
         /**
          * This command is created for delete a bank
          */
-        public DeleteBankCommand() {
+        public BankDeleteCommand() {
             super("delete", "Delete a bank");
         }
 
@@ -97,7 +97,7 @@ public class BankCommand extends AbstractCommandCollection {
             try {
                 BankService.deleteBank(bankName);
                 sender.sendMessage(Message.raw("Bank with the name '" + bankName + "' has been deleted successfully."));
-            } catch (Exception e) {
+            } catch (BankNotFoundException e) {
                 sender.sendMessage(Message.raw("Bank with the name '" + bankName + "' does not exist."));
             }
 

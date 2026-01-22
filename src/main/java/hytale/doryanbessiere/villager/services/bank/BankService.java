@@ -6,6 +6,7 @@ import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
+import hytale.doryanbessiere.villager.components.BankLinkComponent;
 import hytale.doryanbessiere.villager.dto.PlayerData;
 import hytale.doryanbessiere.villager.dto.economy.bank.BankData;
 import hytale.doryanbessiere.villager.dto.economy.bank.BankType;
@@ -56,13 +57,15 @@ public class BankService {
 
         Player player = PlayerUtils.getPlayer(playerRef);
         World world = player.getWorld();
-        UUID uuid = NpcBuilder.create("Klops_Merchant", world, playerRef.getTransform().getPosition())
+        NpcBuilder builder = NpcBuilder.create("Klops_Merchant", world, playerRef.getTransform().getPosition())
                 .interactive(true)
                 .persistent(true)
                 .roleName("LookAtMe")
                 .displayName(bankData.getName())
-                .build()
-                .spawn();
+                .build();
+
+        builder.getHolder().addComponent(BankLinkComponent.getComponentType(), new BankLinkComponent(bankData.getId()));
+        UUID uuid = builder.spawn();
 
         bankData.setEntityId(uuid);
 

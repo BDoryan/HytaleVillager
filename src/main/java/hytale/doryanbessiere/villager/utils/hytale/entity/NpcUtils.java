@@ -9,25 +9,32 @@ import com.hypixel.hytale.server.npc.entities.NPCEntity;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public class NpcUtils {
 
     public static NPCEntity getNpcEntityById(UUID entityId) {
+        CompletableFuture<NPCEntity> future = new CompletableFuture<>();
+
         for(Map.Entry<String, World> entries : Universe.get().getWorlds().entrySet()) {
             World world = entries.getValue();
 
-            Store<EntityStore> entityStore = world.getEntityStore().getStore();
-            Ref<EntityStore> entityRef = world.getEntityRef(entityId);
-            if(entityRef != null && entityRef.isValid()) {
-                NPCEntity npcEntity = entityStore.getComponent(entityRef, NPCEntity.getComponentType());
-                return npcEntity;
-            }
+            world.execute(() -> {
+                Store<EntityStore> entityStore = world.getEntityStore().getStore();
+                Ref<EntityStore> entityRef = world.getEntityRef(entityId);
+                if(entityRef != null && entityRef.isValid()) {
+                    NPCEntity npcEntity = entityStore.getComponent(entityRef, NPCEntity.getComponentType());
+                    future.complete(npcEntity);
+                }
+            });
         }
-        return null;
+
+        return future.join();
     }
 
     public static void deleteEntityById(UUID entityId) {
         NPCEntity npcEntity = getNpcEntityById(entityId);
-        npcEntity.remove();
+        World world = npcEntity.getWorld();
+        world.execute(npcEntity::remove);
     }
 }
