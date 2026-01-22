@@ -47,6 +47,7 @@ Plugin Hytale oriente economie/village avec monnaie joueur, banques, comptes ban
 - Assets Hytale disponibles pour la compilation.
   - Windows: `%APPDATA%/Hytale/install/release/package/game/latest/Assets.zip`
   - Linux (Flatpak): `~/.var/app/com.hypixel.HytaleLauncher/data/Hytale/install/release/package/game/latest/Assets.zip`
+  - Override via `gradle-local.properties` or `gradle.properties`: `hytaleAssetsPath=<path>`
 
 ## Commandes techniques
 ```bash
@@ -58,6 +59,7 @@ Plugin Hytale oriente economie/village avec monnaie joueur, banques, comptes ban
 Notes:
 - `runServer` peut s'appeler `server` selon la version du plugin Hytale.
 - `syncAssets` copie les assets generes par le serveur vers `src/main/resources` (manifest exclu).
+- Pour forcer un dossier serveur local: `hytaleServerPath=<path>` dans `gradle-local.properties` ou `gradle.properties`.
 
 ## Deploiement (optionnel)
 ```bash

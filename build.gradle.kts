@@ -10,7 +10,9 @@ version = "0.1.0"
 val javaVersion = 25
 
 val appData = System.getenv("APPDATA") ?: (System.getenv("HOME") + "/.var/app/com.hypixel.HytaleLauncher/data")
-val hytaleAssets = file("$appData/Hytale/install/release/package/game/latest/Assets.zip")
+val defaultAssetsPath = "$appData/Hytale/install/release/package/game/latest/Assets.zip"
+val hytaleAssetsPath = localOrGradleProp("hytaleAssetsPath") ?: defaultAssetsPath
+val hytaleAssets = file(hytaleAssetsPath)
 
 val localProps = Properties().also { props ->
     val localFile = rootProject.file("gradle-local.properties")
@@ -73,6 +75,31 @@ tasks.named<ProcessResources>("processResources") {
 
 hytale {
 
+}
+
+val hytaleServerPath = localOrGradleProp("hytaleServerPath")
+if (!hytaleServerPath.isNullOrBlank()) {
+    val hytaleExtension = extensions.findByName("hytale")
+    if (hytaleExtension != null) {
+        val resolvedPath = file(hytaleServerPath)
+        val setterCandidates = listOf(
+            "setServerPath",
+            "setServerDirectory",
+            "setServerDir",
+            "setServerInstallPath"
+        )
+        val setter = hytaleExtension.javaClass.methods.firstOrNull { method ->
+            method.name in setterCandidates && method.parameterCount == 1
+        }
+        if (setter != null) {
+            setter.invoke(hytaleExtension, resolvedPath)
+            logger.lifecycle("✅ Using Hytale server path: ${resolvedPath.absolutePath}")
+        } else {
+            logger.warn("⚠️ Could not set server path on the Hytale extension (no supported setter found).")
+        }
+    } else {
+        logger.warn("⚠️ 'hytale' extension not found; cannot apply hytaleServerPath.")
+    }
 }
 
 tasks.withType<Jar> {
