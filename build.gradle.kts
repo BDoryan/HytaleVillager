@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     `maven-publish`
     id("hytale-mod") version "0.+"
@@ -9,6 +11,16 @@ val javaVersion = 25
 
 val appData = System.getenv("APPDATA") ?: (System.getenv("HOME") + "/.var/app/com.hypixel.HytaleLauncher/data")
 val hytaleAssets = file("$appData/Hytale/install/release/package/game/latest/Assets.zip")
+
+val localProps = Properties().also { props ->
+    val localFile = rootProject.file("gradle-local.properties")
+    if (localFile.exists()) {
+        localFile.inputStream().use { props.load(it) }
+    }
+}
+
+fun localOrGradleProp(name: String): String? =
+    localProps.getProperty(name) ?: providers.gradleProperty(name).orNull
 
 repositories {
     mavenCentral()
@@ -126,5 +138,87 @@ afterEvaluate {
         logger.lifecycle("✅ specific task '${targetTask.name}' hooked for auto-sync.")
     } else {
         logger.warn("⚠️ Could not find 'runServer' or 'server' task to hook auto-sync into.")
+    }
+}
+
+// Deployment config
+val deployHost = localOrGradleProp("deployHost")
+val deployUser = localOrGradleProp("deployUser") ?: "debian"
+val deployPort = localOrGradleProp("deployPort") ?: "22"
+val deployPath = localOrGradleProp("deployPath")
+    ?: "/home/debian/GameServers/Hytale/data/mods/"
+val deployRestartCmd = localOrGradleProp("deployRestartCmd")
+    ?: "cd /home/debian/GameServers/Hytale && docker compose restart"
+
+val deployJarTaskName = if (tasks.findByName("shadowJar") != null) "shadowJar" else "jar"
+
+fun requireProp(name: String, value: String?): String {
+    val v = value?.trim()
+    if (v.isNullOrEmpty()) {
+        throw org.gradle.api.GradleException(
+            "Missing required property '$name'. Set it in gradle.properties or ~/.gradle/gradle.properties."
+        )
+    }
+    return v
+}
+
+fun findDeployableJar(): java.io.File {
+    val libsDir = layout.buildDirectory.dir("libs").get().asFile
+    val candidates = libsDir.listFiles { f ->
+        f.isFile && f.extension == "jar" &&
+            !f.name.endsWith("-sources.jar") &&
+            !f.name.endsWith("-javadoc.jar")
+    }?.toList().orEmpty()
+
+    if (candidates.isEmpty()) {
+        throw org.gradle.api.GradleException(
+            "No deployable jar found in ${libsDir.absolutePath} (excluding *-sources.jar and *-javadoc.jar)."
+        )
+    }
+
+    if (candidates.size > 1) {
+        val newest = candidates.maxByOrNull { it.lastModified() }!!
+        logger.lifecycle("Multiple jars found; deploying newest: ${newest.name}")
+    }
+
+    return candidates.maxByOrNull { it.lastModified() }!!
+}
+
+val deployJar = tasks.register<org.gradle.api.tasks.Exec>("deployJar") {
+    group = "deployment"
+    description = "Builds the jar and deploys it to the VPS via rsync."
+    dependsOn(deployJarTaskName)
+
+    doFirst {
+        val host = requireProp("deployHost", deployHost)
+        val user = deployUser.trim().ifEmpty { "debian" }
+        val port = deployPort.trim().ifEmpty { "22" }
+        val path = requireProp("deployPath", deployPath)
+        val jarFile = findDeployableJar()
+
+        environment("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
+        commandLine(
+            "/usr/bin/rsync",
+            "-avz",
+            "-e", "ssh -p $port",
+            jarFile.absolutePath,
+            "$user@$host:$path"
+        )
+    }
+}
+
+tasks.register<org.gradle.api.tasks.Exec>("deployJarAndRestart") {
+    group = "deployment"
+    description = "Deploys the jar and restarts the server on the VPS."
+    dependsOn(deployJar)
+
+    doFirst {
+        val host = requireProp("deployHost", deployHost)
+        val user = deployUser.trim().ifEmpty { "debian" }
+        val port = deployPort.trim().ifEmpty { "22" }
+        val restartCmd = requireProp("deployRestartCmd", deployRestartCmd)
+
+        environment("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
+        commandLine("/usr/bin/ssh", "-p", port, "$user@$host", restartCmd)
     }
 }

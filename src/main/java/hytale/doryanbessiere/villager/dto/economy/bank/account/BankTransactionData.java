@@ -5,7 +5,14 @@ import java.util.UUID;
 
 public class BankTransactionData {
 
+    public enum TransactionType {
+        DEPOSIT,
+        WITHDRAWAL,
+        BANK_CHECK_REDEEM,
+        BANK_CHECK_CREATE
+    }
 
+    private final TransactionType type;
     private final UUID transactionId;
     private final UUID accountId;
     private final long amount;
@@ -13,7 +20,8 @@ public class BankTransactionData {
     private UUID originalAccountId;
     private LocalDateTime createdAt;
 
-    public BankTransactionData(UUID accountId, long amount) {
+    public BankTransactionData(TransactionType type, UUID accountId, long amount) {
+        this.type = type;
         this.transactionId = UUID.randomUUID();
         this.accountId = accountId;
         this.amount = amount;
@@ -35,6 +43,10 @@ public class BankTransactionData {
 
     public long getAmount() {
         return amount;
+    }
+
+    public UUID getOriginalAccountId() {
+        return originalAccountId;
     }
 
     public LocalDateTime getCreatedAt() {

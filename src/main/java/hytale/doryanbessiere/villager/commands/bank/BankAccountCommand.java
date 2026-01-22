@@ -50,12 +50,12 @@ public class BankAccountCommand extends AbstractCommandCollection {
 
         this.addSubCommand(new BankAccountListCommand());
         this.addSubCommand(new BankAccountTransactionCommand());
-        this.addSubCommand(new BankAccountVoucherCommand());
+        this.addSubCommand(new BankAccountBankCheckCommand());
     }
 
-    class BankAccountVoucherCommand extends AbstractCommandCollection {
+    class BankAccountBankCheckCommand extends AbstractCommandCollection {
 
-        public enum BankAccountVoucherAction {
+        public enum BankAccountBankCheckAction {
             WITHDRAW,
             DEPOSIT;
 
@@ -65,10 +65,10 @@ public class BankAccountCommand extends AbstractCommandCollection {
              * @param action
              * @return
              */
-            public static BankAccountVoucherAction getAction(String action) {
-                for (BankAccountVoucherAction voucherAction : BankAccountVoucherAction.values())
-                    if (voucherAction.name().equalsIgnoreCase(action))
-                        return voucherAction;
+            public static BankAccountBankCheckAction getAction(String action) {
+                for (BankAccountBankCheckAction bankCheckAction : BankAccountBankCheckAction.values())
+                    if (bankCheckAction.name().equalsIgnoreCase(action))
+                        return bankCheckAction;
                 return null;
             }
 
@@ -79,7 +79,7 @@ public class BankAccountCommand extends AbstractCommandCollection {
              */
             public static String actionsList() {
                 StringBuilder actions = new StringBuilder();
-                for (BankAccountVoucherAction action : BankAccountVoucherAction.values()) {
+                for (BankAccountBankCheckAction action : BankAccountBankCheckAction.values()) {
                     actions.append(action.name().toLowerCase()).append(", ");
                 }
                 return actions.substring(0, actions.length() - 2);
@@ -87,21 +87,21 @@ public class BankAccountCommand extends AbstractCommandCollection {
         }
 
 
-        public BankAccountVoucherCommand() {
-            super("voucher", "Manage your bank account vouchers");
+        public BankAccountBankCheckCommand() {
+            super("bankcheck", "Manage your bank account checks");
 
-            this.addSubCommand(new BankAccountPaymentVoucherDebug());
-            this.addSubCommand(new BankAccountCreatePaymentVoucherCommand());
-            this.addSubCommand(new BankAccountDepositPaymentVoucherCommand());
+            this.addSubCommand(new BankAccountBankCheckDebug());
+            this.addSubCommand(new BankAccountCreateBankCheckCommand());
+            this.addSubCommand(new BankAccountDepositBankCheckCommand());
         }
 
-        class BankAccountDepositPaymentVoucherCommand extends AbstractAsyncPlayerCommand {
+        class BankAccountDepositBankCheckCommand extends AbstractAsyncPlayerCommand {
 
             private final RequiredArg<String> bankNameArg = this.withRequiredArg("bankName", "The name of the bank", ArgTypes.STRING);
             private final RequiredArg<String> accountNameArg = this.withRequiredArg("accountName", "The name of the bank account", ArgTypes.STRING);
 
-            public BankAccountDepositPaymentVoucherCommand() {
-                super("deposit", "Deposit a bank account voucher in your hand");
+            public BankAccountDepositBankCheckCommand() {
+                super("deposit", "Deposit a bank check in your hand");
             }
 
             @Override
@@ -114,14 +114,14 @@ public class BankAccountCommand extends AbstractCommandCollection {
                 Player player = Utils.getPlayer(playerRef);
                 ItemStack itemInHand = player.getInventory().getItemInHand();
 
-                if(!hytale.doryanbessiere.villager.items.PaymentVoucherItem.isPaymentVoucher(itemInHand)) {
-                    sender.sendMessage(Message.raw("You must hold a valid bank account voucher in your hand to deposit it."));
+                if (!hytale.doryanbessiere.villager.items.BankCheckItem.isBankCheck(itemInHand)) {
+                    sender.sendMessage(Message.raw("You must hold a valid bank check in your hand to deposit it."));
                     return CompletableFuture.completedFuture(null);
                 }
 
                 try {
-                    BankService.depositPaymentVoucher(playerRef, bankName, bankAccountName, itemInHand);
-                    sender.sendMessage(Message.raw("You have successfully deposited the voucher in your hand to your bank account '" + bankAccountName + "' in bank '" + bankName + "'."));
+                    BankService.depositBankCheck(playerRef, bankName, bankAccountName, itemInHand);
+                    sender.sendMessage(Message.raw("You have successfully deposited the bank check in your hand to your bank account '" + bankAccountName + "' in bank '" + bankName + "'."));
                 } catch (AmountMustBePositiveException e) {
                     sender.sendMessage(Message.raw("The amount '" + e.getAmount() + "' is invalid."));
                 } catch (BankAccountNotFoundException e) {
@@ -134,27 +134,27 @@ public class BankAccountCommand extends AbstractCommandCollection {
             }
         }
 
-        class BankAccountPaymentVoucherDebug extends AbstractAsyncPlayerCommand {
+        class BankAccountBankCheckDebug extends AbstractAsyncPlayerCommand {
 
-            public BankAccountPaymentVoucherDebug() {
-                super("debug", "Debug bank account vouchers in your hand");
+            public BankAccountBankCheckDebug() {
+                super("debug", "Debug bank checks in your hand");
             }
 
             @Override
             protected @NonNull CompletableFuture<Void> executeAsync(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
-                BankService.debugPaymentVouchers(playerRef);
+                BankService.debugBankChecks(playerRef);
                 return CompletableFuture.completedFuture(null);
             }
         }
 
-        class BankAccountCreatePaymentVoucherCommand extends AbstractAsyncPlayerCommand {
+        class BankAccountCreateBankCheckCommand extends AbstractAsyncPlayerCommand {
 
             private final RequiredArg<String> bankNameArg = this.withRequiredArg("bankName", "The name of the bank", ArgTypes.STRING);
             private final RequiredArg<String> accountNameArg = this.withRequiredArg("accountName", "The name of the bank account", ArgTypes.STRING);
-            private final RequiredArg<Long> amountArg = this.withRequiredArg("amount", "The amount to withdraw as voucher", NewArgTypes.LONG);
+            private final RequiredArg<Long> amountArg = this.withRequiredArg("amount", "The amount to withdraw as a bank check", NewArgTypes.LONG);
 
-            public BankAccountCreatePaymentVoucherCommand() {
-                super("create", "Create a voucher from your bank account");
+            public BankAccountCreateBankCheckCommand() {
+                super("create", "Create a bank check from your bank account");
             }
 
             @Override
@@ -166,12 +166,12 @@ public class BankAccountCommand extends AbstractCommandCollection {
                 long amount = this.amountArg.get(commandContext);
 
                 try {
-                    BankService.createPaymentVoucher(playerRef, bankName, bankAccountName, amount);
-                    sender.sendMessage(Message.raw("You have successfully created a voucher of " + amount + " coins from your bank account '" + bankAccountName + "' in bank '" + bankName + "'."));
+                    BankService.createBankCheck(playerRef, bankName, bankAccountName, amount);
+                    sender.sendMessage(Message.raw("You have successfully created a bank check of " + amount + " coins from your bank account '" + bankAccountName + "' in bank '" + bankName + "'."));
                 } catch (AmountMustBePositiveException e) {
                     sender.sendMessage(Message.raw("The amount '" + amount + "' is invalid."));
                 } catch (InsufficientFundsException e) {
-                    sender.sendMessage(Message.raw("You do not have enough funds in your bank account '" + bankAccountName + "' in bank '" + bankName + "' to create a voucher of " + amount + " coins."));
+                    sender.sendMessage(Message.raw("You do not have enough funds in your bank account '" + bankAccountName + "' in bank '" + bankName + "' to create a bank check of " + amount + " coins."));
                 } catch (BankAccountNotFoundException e) {
                     sender.sendMessage(Message.raw("You do not have a bank account with the name '" + bankAccountName + "' in bank '" + bankName + "'."));
                 } catch (BankNotFoundException e) {

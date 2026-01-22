@@ -10,7 +10,7 @@ import hytale.doryanbessiere.villager.dto.economy.bank.BankData;
 import hytale.doryanbessiere.villager.dto.economy.bank.BankType;
 import hytale.doryanbessiere.villager.dto.economy.bank.account.BankAccountData;
 import hytale.doryanbessiere.villager.dto.economy.bank.account.BankTransactionData;
-import hytale.doryanbessiere.villager.dto.economy.bank.voucher.PaymentVoucherData;
+import hytale.doryanbessiere.villager.dto.economy.bank.bankcheck.BankCheckData;
 import hytale.doryanbessiere.villager.exceptions.bank.BankException;
 import hytale.doryanbessiere.villager.exceptions.bank.BankNameAlreadyExistsException;
 import hytale.doryanbessiere.villager.exceptions.bank.BankNotFoundException;
@@ -19,9 +19,9 @@ import hytale.doryanbessiere.villager.exceptions.bank.account.BankAccountNotEmpt
 import hytale.doryanbessiere.villager.exceptions.bank.account.BankAccountNotFoundException;
 import hytale.doryanbessiere.villager.exceptions.bank.account.transaction.InsufficientFundsException;
 import hytale.doryanbessiere.villager.exceptions.bank.account.transaction.AmountMustBePositiveException;
-import hytale.doryanbessiere.villager.exceptions.bank.account.voucher.VoucherItemInvalidException;
+import hytale.doryanbessiere.villager.exceptions.bank.account.bankcheck.BankCheckItemInvalidException;
 import hytale.doryanbessiere.villager.exceptions.player.PlayerNotFoundException;
-import hytale.doryanbessiere.villager.items.PaymentVoucherItem;
+import hytale.doryanbessiere.villager.items.BankCheckItem;
 import hytale.doryanbessiere.villager.repository.adapter.file.bank.BankRepositoryFile;
 import hytale.doryanbessiere.villager.repository.bank.BankAccountRepository;
 import hytale.doryanbessiere.villager.repository.bank.BankRepository;
@@ -146,7 +146,7 @@ public class BankService {
         if (amount > currentPlayerBalance)
             throw new InsufficientFundsException(currentPlayerBalance, amount);
 
-        BankTransactionData transactionData = new BankTransactionData(bankAccountData.getId(), amount);
+        BankTransactionData transactionData = new BankTransactionData(BankTransactionData.TransactionType.DEPOSIT, bankAccountData.getId(), amount);
         bankAccountData.addTransaction(transactionData);
         playerData.setBalance(currentPlayerBalance - amount);
 
@@ -178,7 +178,7 @@ public class BankService {
         if (amount <= 0)
             throw new AmountMustBePositiveException(amount);
 
-        BankTransactionData transactionData = new BankTransactionData(bankAccountData.getId(), -amount);
+        BankTransactionData transactionData = new BankTransactionData(BankTransactionData.TransactionType.WITHDRAWAL, bankAccountData.getId(), -amount);
         bankAccountData.addTransaction(transactionData);
         playerData.setBalance(playerData.getBalance() + amount);
 
@@ -189,7 +189,7 @@ public class BankService {
                 + "' at bank '" + bankData.getName() + "' by player '" + playerRef.getUsername() + "'");
     }
 
-    public static void createPaymentVoucher(@NonNull PlayerRef playerRef, String bankName, String bankAccountName, long amount) {
+    public static void createBankCheck(@NonNull PlayerRef playerRef, String bankName, String bankAccountName, long amount) {
         BankData bankData = getBankByName(bankName);
         BankAccountData bankAccountData = getBankAccountByName(bankData.getId(), playerRef.getUuid(), bankAccountName);
 
@@ -202,29 +202,33 @@ public class BankService {
         // Get player
         Player player = Utils.getPlayer(playerRef);
 
-        // Give voucher item to player
-        ItemStack voucherItem = PaymentVoucherItem.createPaymentVoucher(bankAccountData, amount);
+        // Give bank check item to player
+        ItemStack bankCheckItem = BankCheckItem.createBankCheck(bankAccountData, amount);
 
-        // Add the voucher to the player's inventory (hotbar first) (1/2)
-        player.getInventory().getCombinedHotbarFirst().addItemStack(voucherItem);
+        // Add the bank check to the player's inventory (hotbar first) (1/2)
+        player.getInventory().getCombinedHotbarFirst().addItemStack(bankCheckItem);
 
         // Deduct amount from bank account (2/2)
-        BankTransactionData transactionData = new BankTransactionData(bankAccountData.getId(), -amount);
+        BankTransactionData transactionData = new BankTransactionData(
+                BankTransactionData.TransactionType.BANK_CHECK_CREATE,
+                bankAccountData.getId(),
+                -amount
+        );
         bankAccountData.addTransaction(transactionData);
         BankService.saveBankAccount(bankData, bankAccountData);
     }
 
-    public static void depositPaymentVoucher(@NonNull PlayerRef playerRef, String bankName, String bankAccountName, ItemStack voucherItem) {
+    public static void depositBankCheck(@NonNull PlayerRef playerRef, String bankName, String bankAccountName, ItemStack bankCheckItem) {
         BankData bankData = getBankByName(bankName);
         BankAccountData bankAccountData = getBankAccountByName(bankData.getId(), playerRef.getUuid(), bankAccountName);
         Player player = Utils.getPlayer(playerRef);
-        PaymentVoucherData paymentVoucherData = PaymentVoucherItem.getPaymentVoucher(voucherItem);
+        BankCheckData bankCheckData = BankCheckItem.getBankCheck(bankCheckItem);
 
-        if(paymentVoucherData.getAmount() <= 0)
-            throw new AmountMustBePositiveException(paymentVoucherData.getAmount());
+        if (bankCheckData.getAmount() <= 0)
+            throw new AmountMustBePositiveException(bankCheckData.getAmount());
 
         // Create transaction to add amount to the bank account
-        BankTransactionData transactionData = paymentVoucherData.toTransaction();
+        BankTransactionData transactionData = bankCheckData.toTransaction();
 
         // Add transaction to bank account
         bankAccountData.addTransaction(transactionData);
@@ -232,20 +236,20 @@ public class BankService {
         // Save bank account
         BankService.saveBankAccount(bankData, bankAccountData);
 
-        // Remove the voucher from the player's hand
-        player.getInventory().getCombinedHotbarFirst().removeItemStack(voucherItem);
+        // Remove the bank check from the player's hand
+        player.getInventory().getCombinedHotbarFirst().removeItemStack(bankCheckItem);
     }
 
-    public static void debugPaymentVouchers(@NonNull PlayerRef playerRef) {
+    public static void debugBankChecks(@NonNull PlayerRef playerRef) {
         Player player = Utils.getPlayer(playerRef);
         ItemStack itemInHand = player.getInventory().getItemInHand();
         if (itemInHand != null &&
-                itemInHand.getItemId() == "PaymentVoucher" &&
+                itemInHand.getItemId() == "BankCheck" &&
                 itemInHand.getMetadata() != null) {
             playerRef.sendMessage(Message.raw("Bank Account ID: " + itemInHand.getMetadata().getString("bankAccountId")));
             playerRef.sendMessage(Message.raw("Amount: " + itemInHand.getMetadata().getString("amount")));
         } else {
-            playerRef.sendMessage(Message.raw("No valid Payment Voucher in hand."));
+            playerRef.sendMessage(Message.raw("No valid bank check in hand."));
             // Debug info
             if (itemInHand == null) {
                 playerRef.sendMessage(Message.raw("Item in hand is null."));
@@ -320,5 +324,27 @@ public class BankService {
      */
     public static List<BankData> getBanks() {
         return bankRepository.findAll();
+    }
+
+    /**
+     * Return all transactions from all bank accounts
+     *
+     * @return
+     */
+    public static List<BankTransactionData> getAllTransactions() {
+        return getAllBankAccounts().stream()
+            .flatMap(bankAccountData -> bankAccountData.getTransactions().stream())
+            .toList();
+    }
+
+    /**
+     * Return all bank accounts from all banks
+     *
+     * @return
+     */
+    public static List<BankAccountData> getAllBankAccounts() {
+        return bankRepository.findAll().stream()
+            .flatMap(bankData -> bankRepository.getBankAccountRepository(bankData.getId()).findAll().stream())
+            .toList();
     }
 }
