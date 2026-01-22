@@ -5,6 +5,7 @@ import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.world.World;
 import hytale.doryanbessiere.villager.dto.PlayerData;
 import hytale.doryanbessiere.villager.dto.economy.bank.BankData;
 import hytale.doryanbessiere.villager.dto.economy.bank.BankType;
@@ -27,6 +28,9 @@ import hytale.doryanbessiere.villager.repository.bank.BankAccountRepository;
 import hytale.doryanbessiere.villager.repository.bank.BankRepository;
 import hytale.doryanbessiere.villager.services.PlayerService;
 import hytale.doryanbessiere.villager.utils.Utils;
+import hytale.doryanbessiere.villager.utils.hytale.PlayerUtils;
+import hytale.doryanbessiere.villager.utils.hytale.entity.NpcBuilder;
+import hytale.doryanbessiere.villager.utils.hytale.entity.NpcUtils;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
@@ -50,9 +54,19 @@ public class BankService {
         if (bankRepository.findByName(bankData.getName()) != null)
             throw new BankNameAlreadyExistsException(bankData.getName());
 
-        bankData.applyPositionAndOrientation(playerRef);
-        bankRepository.create(bankData);
+        Player player = PlayerUtils.getPlayer(playerRef);
+        World world = player.getWorld();
+        UUID uuid = NpcBuilder.create("Klops_Merchant", world, playerRef.getTransform().getPosition())
+                .interactive(true)
+                .persistent(true)
+                .roleName("LookAtMe")
+                .displayName(bankData.getName())
+                .build()
+                .spawn();
 
+        bankData.setEntityId(uuid);
+
+        bankRepository.create(bankData);
         logger.atInfo().log("Bank '" + name + "' created by player '" + playerRef.getUsername() + "'");
     }
 
@@ -200,7 +214,7 @@ public class BankService {
             throw new InsufficientFundsException(bankAccountData.getBalance(), amount);
 
         // Get player
-        Player player = Utils.getPlayer(playerRef);
+        Player player = PlayerUtils.getPlayer(playerRef);
 
         // Give bank check item to player
         ItemStack bankCheckItem = BankCheckItem.createBankCheck(bankAccountData, amount);
@@ -221,7 +235,7 @@ public class BankService {
     public static void depositBankCheck(@NonNull PlayerRef playerRef, String bankName, String bankAccountName, ItemStack bankCheckItem) {
         BankData bankData = getBankByName(bankName);
         BankAccountData bankAccountData = getBankAccountByName(bankData.getId(), playerRef.getUuid(), bankAccountName);
-        Player player = Utils.getPlayer(playerRef);
+        Player player = PlayerUtils.getPlayer(playerRef);
         BankCheckData bankCheckData = BankCheckItem.getBankCheck(bankCheckItem);
 
         if (bankCheckData.getAmount() <= 0)
@@ -241,7 +255,7 @@ public class BankService {
     }
 
     public static void debugBankChecks(@NonNull PlayerRef playerRef) {
-        Player player = Utils.getPlayer(playerRef);
+        Player player = PlayerUtils.getPlayer(playerRef);
         ItemStack itemInHand = player.getInventory().getItemInHand();
         if (itemInHand != null &&
                 itemInHand.getItemId() == "BankCheck" &&
@@ -333,8 +347,8 @@ public class BankService {
      */
     public static List<BankTransactionData> getAllTransactions() {
         return getAllBankAccounts().stream()
-            .flatMap(bankAccountData -> bankAccountData.getTransactions().stream())
-            .toList();
+                .flatMap(bankAccountData -> bankAccountData.getTransactions().stream())
+                .toList();
     }
 
     /**
@@ -344,7 +358,21 @@ public class BankService {
      */
     public static List<BankAccountData> getAllBankAccounts() {
         return bankRepository.findAll().stream()
-            .flatMap(bankData -> bankRepository.getBankAccountRepository(bankData.getId()).findAll().stream())
-            .toList();
+                .flatMap(bankData -> bankRepository.getBankAccountRepository(bankData.getId()).findAll().stream())
+                .toList();
+    }
+
+    public static void deleteBank(String bankName) {
+        BankData bankData = bankRepository.findByName(bankName);
+        if (bankData == null)
+            throw new BankNotFoundException(bankName);
+
+        // Delete bank NPC entity
+        NpcUtils.deleteEntityById(bankData.getEntityId());
+
+        // Delete bank data
+        bankRepository.delete(bankData);
+
+        logger.atInfo().log("Bank '" + bankName + "' has been deleted.");
     }
 }

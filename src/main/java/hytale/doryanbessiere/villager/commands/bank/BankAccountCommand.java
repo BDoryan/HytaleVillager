@@ -25,8 +25,8 @@ import hytale.doryanbessiere.villager.exceptions.bank.BankNotFoundException;
 import hytale.doryanbessiere.villager.exceptions.bank.account.transaction.AmountMustBePositiveException;
 import hytale.doryanbessiere.villager.exceptions.bank.account.transaction.InsufficientFundsException;
 import hytale.doryanbessiere.villager.services.bank.BankService;
-import hytale.doryanbessiere.villager.utils.Utils;
-import hytale.doryanbessiere.villager.utils.command.NewArgTypes;
+import hytale.doryanbessiere.villager.utils.hytale.command.CustomArgTypes;
+import hytale.doryanbessiere.villager.utils.hytale.PlayerUtils;
 import org.jspecify.annotations.NonNull;
 
 import java.awt.*;
@@ -90,7 +90,6 @@ public class BankAccountCommand extends AbstractCommandCollection {
         public BankAccountBankCheckCommand() {
             super("bankcheck", "Manage your bank account checks");
 
-            this.addSubCommand(new BankAccountBankCheckDebug());
             this.addSubCommand(new BankAccountCreateBankCheckCommand());
             this.addSubCommand(new BankAccountDepositBankCheckCommand());
         }
@@ -111,7 +110,7 @@ public class BankAccountCommand extends AbstractCommandCollection {
                 String bankName = this.bankNameArg.get(commandContext);
                 String bankAccountName = this.accountNameArg.get(commandContext);
 
-                Player player = Utils.getPlayer(playerRef);
+                Player player = PlayerUtils.getPlayer(playerRef);
                 ItemStack itemInHand = player.getInventory().getItemInHand();
 
                 if (!hytale.doryanbessiere.villager.items.BankCheckItem.isBankCheck(itemInHand)) {
@@ -134,24 +133,11 @@ public class BankAccountCommand extends AbstractCommandCollection {
             }
         }
 
-        class BankAccountBankCheckDebug extends AbstractAsyncPlayerCommand {
-
-            public BankAccountBankCheckDebug() {
-                super("debug", "Debug bank checks in your hand");
-            }
-
-            @Override
-            protected @NonNull CompletableFuture<Void> executeAsync(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
-                BankService.debugBankChecks(playerRef);
-                return CompletableFuture.completedFuture(null);
-            }
-        }
-
         class BankAccountCreateBankCheckCommand extends AbstractAsyncPlayerCommand {
 
             private final RequiredArg<String> bankNameArg = this.withRequiredArg("bankName", "The name of the bank", ArgTypes.STRING);
             private final RequiredArg<String> accountNameArg = this.withRequiredArg("accountName", "The name of the bank account", ArgTypes.STRING);
-            private final RequiredArg<Long> amountArg = this.withRequiredArg("amount", "The amount to withdraw as a bank check", NewArgTypes.LONG);
+            private final RequiredArg<Long> amountArg = this.withRequiredArg("amount", "The amount to withdraw as a bank check", CustomArgTypes.LONG);
 
             public BankAccountCreateBankCheckCommand() {
                 super("create", "Create a bank check from your bank account");
@@ -252,7 +238,7 @@ public class BankAccountCommand extends AbstractCommandCollection {
         private final RequiredArg<String> actionArg = this.withRequiredArg("action", "The action to perform (" + BankAccountTransactionAction.actionsList() + ")", ArgTypes.STRING);
         private final RequiredArg<String> bankNameArg = this.withRequiredArg("bankName", "The name of the bank", ArgTypes.STRING);
         private final RequiredArg<String> accountNameArg = this.withRequiredArg("accountName", "The name of the bank account", ArgTypes.STRING);
-        private final RequiredArg<Long> amountArg = this.withRequiredArg("amount", "The amount to the transaction", NewArgTypes.LONG);
+        private final RequiredArg<Long> amountArg = this.withRequiredArg("amount", "The amount to the transaction", CustomArgTypes.LONG);
 
         public BankAccountTransactionCommand() {
             super("transaction", "Manage your bank account transactions");

@@ -15,24 +15,13 @@ public class BankData {
     private final BankType type;
 
     private String name;
-    private Vector3f position;
-    private Vector3f rotation;
+    private UUID entityId;
 
     public BankData(String name, BankType type) {
         this.id = UUID.randomUUID();
         this.type = type;
 
         this.name = name;
-    }
-
-    /**
-     * Apply the position and orientation of the player to the bank
-     *
-     * @param playerRef
-     */
-    public void applyPositionAndOrientation(PlayerRef playerRef) {
-        this.position = playerRef.getTransform().getPosition().toVector3f();
-        this.rotation = playerRef.getTransform().getRotation();
     }
 
     public long getTotalAccounts() {
@@ -52,12 +41,12 @@ public class BankData {
                 .sum();
     }
 
-    public Vector3f getPosition() {
-        return position;
+    public void setEntityId(UUID entityId) {
+        this.entityId = entityId;
     }
 
-    public Vector3f getRotation() {
-        return rotation;
+    public UUID getEntityId() {
+        return entityId;
     }
 
     public BankType getType() {

@@ -1,4 +1,4 @@
-package hytale.doryanbessiere.villager.utils.event;
+package hytale.doryanbessiere.villager.utils.hytale.event;
 
 import com.hypixel.hytale.event.EventRegistry;
 

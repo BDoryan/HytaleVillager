@@ -1,10 +1,9 @@
 package hytale.doryanbessiere.villager.listeners;
 
 import com.hypixel.hytale.server.core.event.events.player.PlayerConnectEvent;
-import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import hytale.doryanbessiere.villager.dto.PlayerData;
 import hytale.doryanbessiere.villager.services.PlayerService;
-import hytale.doryanbessiere.villager.utils.event.OnEvent;
+import hytale.doryanbessiere.villager.utils.hytale.event.OnEvent;
 
 public class PlayerConnectionListener {
 

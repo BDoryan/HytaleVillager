@@ -1,0 +1,38 @@
+{
+  "Type": "Generic",
+  "StartState": "Idle",
+  "Appearance": "Klops_Merchant",
+  "MaxHealth": 10,
+  "DefaultNPCAttitude": "Ignore",
+  "DefaultPlayerAttitude": "Neutral",
+  "MotionControllerList": [
+    {
+      "Type": "Walk",
+      "MaxWalkSpeed": 1.0,
+      "MinWalkSpeed": 0.1,
+      "Gravity": 10,
+      "MaxRotationSpeed": 360
+    }
+  ],
+  "Instructions": [
+    {
+      "Instructions": [
+        {
+          "Sensor": { "Type": "State", "State": "Idle" },
+          "Instructions": [
+            {
+              "Continue": true,
+              "Sensor": { "Type": "Player", "Range": 12 },
+              "HeadMotion": { "Type": "Watch" }
+            },
+            {
+              "Sensor": { "Type": "Any" },
+              "BodyMotion": { "Type": "Nothing" }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "NameTranslationKey": "server.npcRoles.MyLooker.name"
+}

@@ -17,11 +17,13 @@ import hytale.doryanbessiere.villager.dto.economy.bank.BankData;
 import hytale.doryanbessiere.villager.dto.economy.bank.BankType;
 import hytale.doryanbessiere.villager.exceptions.bank.BankNameAlreadyExistsException;
 import hytale.doryanbessiere.villager.services.bank.BankService;
+import hytale.doryanbessiere.villager.utils.hytale.entity.NpcBuilder;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -49,7 +51,7 @@ public class BankCommand extends AbstractCommandCollection {
         this.addSubCommand(new BankAccountCommand());
     }
 
-    static class BankListCommand extends AbstractAsyncCommand {
+    class BankListCommand extends AbstractAsyncCommand {
 
         /**
          * This command is created for list all banks
@@ -77,7 +79,33 @@ public class BankCommand extends AbstractCommandCollection {
         }
     }
 
-    static class BankInfoCommand extends AbstractAsyncCommand {
+    class DeleteBankCommand extends AbstractAsyncCommand {
+
+        private final RequiredArg<String> bankNameArg = this.withRequiredArg("name", "Name of the bank to delete", ArgTypes.STRING);
+
+        /**
+         * This command is created for delete a bank
+         */
+        public DeleteBankCommand() {
+            super("delete", "Delete a bank");
+        }
+
+        @Override
+        protected @NonNull CompletableFuture<Void> executeAsync(@NonNull CommandContext commandContext) {
+            CommandSender sender = commandContext.sender();
+            String bankName = this.bankNameArg.get(commandContext);
+            try {
+                BankService.deleteBank(bankName);
+                sender.sendMessage(Message.raw("Bank with the name '" + bankName + "' has been deleted successfully."));
+            } catch (Exception e) {
+                sender.sendMessage(Message.raw("Bank with the name '" + bankName + "' does not exist."));
+            }
+
+            return CompletableFuture.completedFuture(null);
+        }
+    }
+
+    class BankInfoCommand extends AbstractAsyncCommand {
 
         private final RequiredArg<String> bankNameArg = this.withRequiredArg("name", "Name of the bank", ArgTypes.STRING);
 
@@ -98,7 +126,6 @@ public class BankCommand extends AbstractCommandCollection {
                 sender.sendMessage(Message.raw("--[ Bank Information ]--"));
                 sender.sendMessage(Message.raw("Name: " + bankData.getName()));
                 sender.sendMessage(Message.raw("Type: " + bankData.getType()));
-                sender.sendMessage(Message.raw("Location: " + bankData.getPosition()));
                 sender.sendMessage(Message.raw("Total Accounts: " + bankData.getTotalAccounts()));
                 sender.sendMessage(Message.raw("Total Balance: " + bankData.getTotalBalance()));
                 sender.sendMessage(Message.raw("-----------------------"));
@@ -110,7 +137,7 @@ public class BankCommand extends AbstractCommandCollection {
         }
     }
 
-    static class BankCreateCommand extends AbstractAsyncPlayerCommand {
+    class BankCreateCommand extends AbstractAsyncPlayerCommand {
 
         private final RequiredArg<String> nameArg = this.withRequiredArg("name", "Name of the bank", ArgTypes.STRING);
         private final RequiredArg<String> typeArg = this.withRequiredArg("type", "Type of the bank (VILLAGE or GOVERNMENT)", ArgTypes.STRING);
@@ -134,6 +161,7 @@ public class BankCommand extends AbstractCommandCollection {
 
                 try {
                     BankService.createBank(name, type, playerRef);
+
                     sender.sendMessage(Message.raw("Bank '" + name + "' of type '" + type + "' created successfully."));
                 } catch (BankNameAlreadyExistsException e) {
                     sender.sendMessage(Message.raw("A bank with the name '" + name + "' already exists."));
