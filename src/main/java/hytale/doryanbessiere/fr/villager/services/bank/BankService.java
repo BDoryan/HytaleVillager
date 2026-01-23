@@ -1,6 +1,7 @@
 package hytale.doryanbessiere.fr.villager.services.bank;
 
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
@@ -56,7 +57,7 @@ public class BankService {
         Player player = PlayerUtils.getPlayer(playerRef);
         World world = player.getWorld();
         NpcBuilder builder = NpcBuilder.create("Klops_Merchant", world, playerRef.getTransform().getPosition())
-                .interactive(true)
+                .interactive(InteractionType.Use, "Root_Bank_Open")
                 .persistent(true)
                 .roleName("LookAtMe")
                 .displayName(bankData.getName())
@@ -230,6 +231,8 @@ public class BankService {
                 -amount
         );
         bankAccountData.addTransaction(transactionData);
+
+        // Save bank account
         BankService.saveBankAccount(bankData, bankAccountData);
     }
 

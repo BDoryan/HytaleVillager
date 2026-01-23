@@ -9,11 +9,6 @@ group = "com.example"
 version = "0.1.0"
 val javaVersion = 25
 
-val appData = System.getenv("APPDATA") ?: (System.getenv("HOME") + "/.var/app/com.hypixel.HytaleLauncher/data")
-val defaultAssetsPath = "$appData/Hytale/install/release/package/game/latest/Assets.zip"
-val hytaleAssetsPath = localOrGradleProp("hytaleAssetsPath") ?: defaultAssetsPath
-val hytaleAssets = file(hytaleAssetsPath)
-
 val localProps = Properties().also { props ->
     val localFile = rootProject.file("gradle-local.properties")
     if (localFile.exists()) {
@@ -23,6 +18,11 @@ val localProps = Properties().also { props ->
 
 fun localOrGradleProp(name: String): String? =
     localProps.getProperty(name) ?: providers.gradleProperty(name).orNull
+
+val appData = System.getenv("APPDATA") ?: (System.getenv("HOME") + "/.var/app/com.hypixel.HytaleLauncher/data")
+val defaultAssetsPath = "$appData/Hytale/install/release/package/game/latest/Assets.zip"
+val hytaleAssetsPath = localOrGradleProp("hytaleAssetsPath") ?: defaultAssetsPath
+val hytaleAssets = file(hytaleAssetsPath)
 
 repositories {
     mavenCentral()
@@ -99,6 +99,47 @@ if (!hytaleServerPath.isNullOrBlank()) {
         }
     } else {
         logger.warn("⚠️ 'hytale' extension not found; cannot apply hytaleServerPath.")
+    }
+}
+
+tasks.matching { it.name == "runServer" || it.name == "server" }.configureEach {
+    doFirst {
+        if (this is JavaExec) {
+            val assetsArgPath = hytaleAssets.absolutePath
+            val existingArgs = (args ?: emptyList()).map { it.toString() }.toMutableList()
+            val cleanedArgs = mutableListOf<String>()
+            var skipNext = false
+            existingArgs.forEach { arg ->
+                if (skipNext) {
+                    skipNext = false
+                    return@forEach
+                }
+                if (arg == "--assets" || arg == "--asset") {
+                    skipNext = true
+                    return@forEach
+                }
+                if (arg.startsWith("--assets=") || arg.startsWith("--asset=")) {
+                    return@forEach
+                }
+                cleanedArgs.add(arg)
+            }
+
+            if (hytaleAssets.exists()) {
+                cleanedArgs.add("--assets=$assetsArgPath")
+                logger.lifecycle("✅ Using Hytale assets path: $assetsArgPath")
+            } else {
+                logger.warn("⚠️ Hytale assets not found at: $assetsArgPath (skip --assets)")
+            }
+
+            argumentProviders.clear()
+            setArgs(cleanedArgs)
+            val argsJoined = cleanedArgs.joinToString(" ")
+            val mainClassName = mainClass.orNull ?: "<unknown>"
+            val exe = executable ?: "<unset>"
+            logger.lifecycle("▶ Hytale run command: $exe -cp <classpath> $mainClassName $argsJoined".trim())
+        } else {
+            logger.warn("⚠️ '${name}' task is not a JavaExec; cannot adjust or log args.")
+        }
     }
 }
 

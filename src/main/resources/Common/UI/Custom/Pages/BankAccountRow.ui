@@ -1,0 +1,10 @@
+Group #Group {
+  LayoutMode: Top;
+
+  Label #Name {
+    Style: (RenderBold: true);
+  }
+
+  Label #Balance {
+  }
+}

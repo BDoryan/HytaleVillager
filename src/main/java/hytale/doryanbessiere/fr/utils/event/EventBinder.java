@@ -1,6 +1,7 @@
 package hytale.doryanbessiere.fr.utils.event;
 
 import com.hypixel.hytale.event.EventRegistry;
+import com.hypixel.hytale.logger.HytaleLogger;
 
 import java.lang.reflect.Method;
 import java.util.function.Consumer;
@@ -9,6 +10,8 @@ import java.util.function.Consumer;
  * Utility class to bind event handlers annotated with @OnEvent.
  */
 public final class EventBinder {
+
+    private static final HytaleLogger logger = HytaleLogger.forEnclosingClass();
 
     private EventBinder() {
     }
@@ -45,6 +48,7 @@ public final class EventBinder {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static void register(EventRegistry registry, Class eventType, Consumer handler) {
+        logger.atInfo().log("Registered event handler for event: " + eventType.getName());
         registry.register(eventType, handler);
     }
 }

@@ -2,6 +2,7 @@ package hytale.doryanbessiere.fr.villager.commands.debug;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
@@ -53,7 +54,7 @@ public class DebugCommand extends AbstractCommandCollection {
 
             UUID uuid = NpcBuilder.create("Kweebec_Sapling", world, playerRef.getTransform().getPosition())
                     .rotation(playerRef.getTransform().getRotation())
-                    .interactive(true)
+                    .interactive(InteractionType.Use, "Root_Bank_Open")
                     .persistent(false)
                     .roleName("LookAtMe")
                     .displayName("Debug NPC")

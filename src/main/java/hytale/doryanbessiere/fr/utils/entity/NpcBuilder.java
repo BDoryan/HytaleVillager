@@ -4,6 +4,7 @@ import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
+import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.model.config.Model;
 import com.hypixel.hytale.server.core.asset.type.model.config.ModelAsset;
@@ -41,9 +42,11 @@ public class NpcBuilder {
 
     protected float scale = 1.0f;
 
-    protected boolean interactive = false;
-    protected boolean persistent = false;
     protected boolean invulnerable = true;
+    protected boolean persistent = false;
+
+    private InteractionType interactionType;
+    private String interactionId;
 
     protected String roleName = null;
     protected String displayName = null;
@@ -105,11 +108,6 @@ public class NpcBuilder {
         if (this.persistent)
             this.holder.addComponent(PersistentModel.getComponentType(), new PersistentModel(this.model.toReference()));
 
-        if (this.interactive) {
-            this.holder.addComponent(Interactions.getComponentType(), new Interactions());
-            this.holder.ensureComponent(Interactable.getComponentType());
-        }
-
         return this;
     }
 
@@ -122,9 +120,20 @@ public class NpcBuilder {
         world.execute(() -> {
             Ref<EntityStore> ref = store.addEntity(this.holder, AddReason.SPAWN);
 
-            if (ref != null && this.displayName != null) {
-                EntitySupport.setDisplayName(ref, this.displayName, true, store);
-                logger.atInfo().log("Set NPC display name to: " + this.displayName);
+            if (ref != null) {
+                if (this.displayName != null) {
+                    EntitySupport.setDisplayName(ref, this.displayName, true, store);
+                    logger.atInfo().log("Set NPC display name to: " + this.displayName);
+                }
+
+                if (this.interactionType != null && this.interactionId != null) {
+                    Interactions interactions = new Interactions();
+                    interactions.setInteractionId(this.interactionType, this.interactionId);
+
+                    store.putComponent(ref, Interactions.getComponentType(), interactions);
+                    store.putComponent(ref, Interactable.getComponentType(), Interactable.INSTANCE);
+                }
+
             }
         });
 
@@ -143,13 +152,15 @@ public class NpcBuilder {
     }
 
     /**
-     * Sets whether the NPC is interactive.
+     * Define the interactive behavior of the NPC.
      *
-     * @param interactive
+     * @param interactionType
+     * @param interactionId
      * @return
      */
-    public NpcBuilder interactive(boolean interactive) {
-        this.interactive = interactive;
+    public NpcBuilder interactive(InteractionType interactionType, String interactionId) {
+        this.interactionType = interactionType;
+        this.interactionId = interactionId;
         return this;
     }
 
