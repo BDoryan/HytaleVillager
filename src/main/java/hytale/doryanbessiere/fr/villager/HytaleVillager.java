@@ -47,9 +47,9 @@ public class HytaleVillager extends JavaPlugin {
         logger.atInfo().log("Registering event listeners");
         EventListener.registerListener(this,
                 new PlayerConnectionListener()
-//                new PlayerInteractListener()
         );
 
+        logger.atInfo().log("Registering bank components");
         registerBankInteractions();
 
         logger.atInfo().log("Registering components");
