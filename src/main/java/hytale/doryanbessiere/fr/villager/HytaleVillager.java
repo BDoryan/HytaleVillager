@@ -13,12 +13,18 @@ import hytale.doryanbessiere.fr.villager.components.BankLinkComponent;
 import hytale.doryanbessiere.fr.villager.listeners.PlayerConnectionListener;
 import hytale.doryanbessiere.fr.villager.pages.BankAccountsPage;
 import hytale.doryanbessiere.fr.villager.pages.BankAccountsPageSupplier;
+import hytale.doryanbessiere.fr.villager.services.bank.BankService;
 import hytale.doryanbessiere.fr.utils.event.EventListener;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class HytaleVillager extends JavaPlugin {
 
     private static final HytaleLogger logger = HytaleLogger.forEnclosingClass();
     private static HytaleVillager instance;
+    private ScheduledExecutorService npcWatchdog;
 
     public static HytaleVillager instance() {
         return instance;
@@ -56,11 +62,25 @@ public class HytaleVillager extends JavaPlugin {
         ComponentType<EntityStore, BankLinkComponent> type =
                 getEntityStoreRegistry().registerComponent(BankLinkComponent.class, "BankLinkComponent", BankLinkComponent.CODEC);
         BankLinkComponent.setComponentType(type);
+
+        startNpcWatchdog();
     }
 
     private void registerBankInteractions() {
         logger.atInfo().log("Registering bank interactions");
         OpenCustomUIInteraction.registerCustomPageSupplier(this,
                 BankAccountsPage.class, "BankAccounts", new BankAccountsPageSupplier());
+    }
+
+    private void startNpcWatchdog() {
+        if (npcWatchdog != null) {
+            return;
+        }
+        this.npcWatchdog = Executors.newSingleThreadScheduledExecutor();
+        this.npcWatchdog.scheduleAtFixedRate(this::checkAndRespawnInvalidNpcs, 30L, 30L, TimeUnit.SECONDS);
+    }
+
+    private void checkAndRespawnInvalidNpcs() {
+        BankService.checkAndRespawnInvalidNpcs();
     }
 }

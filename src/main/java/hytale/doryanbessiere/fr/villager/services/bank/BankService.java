@@ -1,12 +1,18 @@
 package hytale.doryanbessiere.fr.villager.services.bank;
 
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.modules.entity.component.Interactable;
+import com.hypixel.hytale.server.core.modules.interaction.Interactions;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import hytale.doryanbessiere.fr.villager.components.BankLinkComponent;
 import hytale.doryanbessiere.fr.villager.dto.PlayerData;
 import hytale.doryanbessiere.fr.villager.dto.economy.bank.BankData;
@@ -342,6 +348,78 @@ public class BankService {
      */
     public static List<BankData> getBanks() {
         return bankRepository.findAll();
+    }
+
+    public static void ensureBankNpcInteractions() {
+        for (BankData bankData : bankRepository.findAll()) {
+            UUID entityId = bankData.getEntityId();
+            if (entityId == null) {
+                continue;
+            }
+
+            for (World world : Universe.get().getWorlds().values()) {
+                String bankName = bankData.getName();
+                world.execute(() -> {
+                    Ref<EntityStore> entityRef = world.getEntityRef(entityId);
+                    if (entityRef == null || !entityRef.isValid()) {
+                        return;
+                    }
+
+                    Store<EntityStore> store = world.getEntityStore().getStore();
+                    Interactions interactions = store.getComponent(entityRef, Interactions.getComponentType());
+                    if (interactions == null) {
+                        interactions = new Interactions();
+                    }
+                    interactions.setInteractionId(InteractionType.Use, "Root_Bank_Open");
+                    store.putComponent(entityRef, Interactions.getComponentType(), interactions);
+
+                    if (store.getComponent(entityRef, Interactable.getComponentType()) == null) {
+                        store.putComponent(entityRef, Interactable.getComponentType(), Interactable.INSTANCE);
+                    }
+
+                    logger.atInfo().log("Reapplied interaction for bank NPC: " + bankName);
+                });
+            }
+        }
+    }
+
+    public static void checkAndRespawnInvalidNpcs() {
+        for (BankData bankData : bankRepository.findAll()) {
+            UUID entityId = bankData.getEntityId();
+            if (entityId == null) {
+                continue;
+            }
+
+            for (World world : Universe.get().getWorlds().values()) {
+                String bankName = bankData.getName();
+                world.execute(() -> {
+                    Ref<EntityStore> entityRef = world.getEntityRef(entityId);
+                    if (entityRef == null || !entityRef.isValid()) {
+                        return;
+                    }
+
+                    Store<EntityStore> store = world.getEntityStore().getStore();
+                    boolean updated = false;
+
+                    Interactions interactions = store.getComponent(entityRef, Interactions.getComponentType());
+                    if (interactions == null) {
+                        interactions = new Interactions();
+                        store.putComponent(entityRef, Interactions.getComponentType(), interactions);
+                        updated = true;
+                    }
+                    interactions.setInteractionId(InteractionType.Use, "Root_Bank_Open");
+
+                    if (store.getComponent(entityRef, Interactable.getComponentType()) == null) {
+                        store.putComponent(entityRef, Interactable.getComponentType(), Interactable.INSTANCE);
+                        updated = true;
+                    }
+
+                    if (updated) {
+                        logger.atInfo().log("Repaired interaction components for bank NPC: " + bankName);
+                    }
+                });
+            }
+        }
     }
 
     /**

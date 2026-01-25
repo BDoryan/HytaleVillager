@@ -1,5 +1,6 @@
 package hytale.doryanbessiere.fr.villager.commands.debug;
 
+import com.hypixel.hytale.component.Component;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.protocol.InteractionType;
@@ -11,6 +12,8 @@ import com.hypixel.hytale.server.core.command.system.basecommands.AbstractAsyncC
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractAsyncPlayerCommand;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractCommandCollection;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.modules.entity.component.Interactable;
+import com.hypixel.hytale.server.core.modules.interaction.Interactions;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -19,8 +22,12 @@ import hytale.doryanbessiere.fr.villager.HytaleVillager;
 import hytale.doryanbessiere.fr.utils.PlayerUtils;
 import hytale.doryanbessiere.fr.utils.entity.NpcBuilder;
 import hytale.doryanbessiere.fr.utils.entity.NpcUtils;
+import hytale.doryanbessiere.fr.villager.dto.economy.bank.BankData;
+import hytale.doryanbessiere.fr.villager.services.bank.BankService;
 import org.jspecify.annotations.NonNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -39,6 +46,7 @@ public class DebugCommand extends AbstractCommandCollection {
 
             this.addSubCommand(new DebugGetNpcCommand());
             this.addSubCommand(new DebugSpawnNpcCommand());
+            this.addSubCommand(new DebugRepairInteractCommand());
         }
     }
 
@@ -68,6 +76,69 @@ public class DebugCommand extends AbstractCommandCollection {
         }
     }
 
+    class DebugRepairInteractCommand extends AbstractAsyncPlayerCommand {
+
+        public DebugRepairInteractCommand() {
+            super("repairInteract", "Debug NPC commands");
+        }
+
+        @Override
+        protected @NonNull CompletableFuture<Void> executeAsync(@NonNull CommandContext commandContext,
+                                                                @NonNull Store<EntityStore> store,
+                                                                @NonNull Ref<EntityStore> ref,
+                                                                @NonNull PlayerRef playerRef,
+                                                                @NonNull World world) {
+
+            BankData[] banks = BankService.getBanks().toArray(new BankData[0]);
+            commandContext.sender().sendMessage(Message.raw("There are " + banks.length + " banks registered."));
+
+            List<CompletableFuture<Void>> tasks = new ArrayList<>();
+            for (BankData bank : banks) {
+                commandContext.sender().sendMessage(Message.raw("Bank: " + bank.getName() + " (ID: " + bank.getId() + ")"));
+                UUID npcId = bank.getEntityId();
+                commandContext.sender().sendMessage(Message.raw("Checking NPC with ID: " + npcId + " for bank: " + bank.getName()));
+
+                commandContext.sender().sendMessage(Message.raw("Retrieving NPC entity..."));
+                CompletableFuture<Void> task = NpcUtils.getNpcEntityByIdAsync(npcId).thenAccept(npcEntity -> {
+                    commandContext.sender().sendMessage(Message.raw("Retrieved NPC entity."));
+                    if (npcEntity != null) {
+                        commandContext.sender().sendMessage(Message.raw("Found NPC with ID: " + npcId + " for bank: " + bank.getName()));
+
+                        Ref<EntityStore> npcEntityRef = npcEntity.getReference();
+                        Store<EntityStore> entityStore = npcEntityRef.getStore();
+                        World npcWorld = npcEntity.getWorld();
+
+                        npcWorld.execute(() -> {
+                            Interactable interactable = entityStore.getComponent(npcEntityRef, Interactable.getComponentType());
+                            if (interactable == null) {
+                                commandContext.sender().sendMessage(Message.raw("NPC with ID: " + npcId + " is missing Interactable component. Adding it now."));
+                                entityStore.putComponent(npcEntityRef, Interactable.getComponentType(), Interactable.INSTANCE);
+                            } else {
+                                commandContext.sender().sendMessage(Message.raw("NPC with ID: " + npcId + " already has Interactable component."));
+                            }
+
+                            Interactions interactions = entityStore.getComponent(npcEntityRef, Interactions.getComponentType());
+                            if (interactions == null) {
+                                commandContext.sender().sendMessage(Message.raw("NPC with ID: " + npcId + " is missing Interactions component. Adding it now."));
+                                interactions = new Interactions();
+                                entityStore.putComponent(npcEntityRef, Interactions.getComponentType(), interactions);
+                            } else {
+                                commandContext.sender().sendMessage(Message.raw("NPC with ID: " + npcId + " already has Interactions component."));
+                            }
+                            interactions.setInteractionId(InteractionType.Use, "Root_Bank_Open");
+                            commandContext.sender().sendMessage(Message.raw("Set interaction for NPC with ID: " + npcId + " to open bank UI."));
+                        });
+                    } else {
+                        commandContext.sender().sendMessage(Message.raw("NPC with ID " + npcId + " not found for bank: " + bank.getName()));
+                    }
+                });
+                tasks.add(task);
+            }
+
+            return CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0]));
+        }
+    }
+
     class DebugGetNpcCommand extends AbstractAsyncCommand {
 
         private final RequiredArg<UUID> npcIdArg = this.withRequiredArg("npcId", "The NPC ID to debug", ArgTypes.UUID);
@@ -81,16 +152,15 @@ public class DebugCommand extends AbstractCommandCollection {
             UUID npcId = npcIdArg.get(commandContext);
 
             commandContext.sender().sendMessage(Message.raw("Debugging NPC with ID: " + npcId));
-            NPCEntity npcRef = NpcUtils.getNpcEntityById(npcId);
-            if (npcRef != null) {
-                commandContext.sender().sendMessage(Message.raw("Found NPC with ID: " + npcId));
-                HytaleVillager.logger().atInfo().log("Found NPC with ID: " + npcId);
-            } else {
-                commandContext.sender().sendMessage(Message.raw("NPC with ID " + npcId + " not found."));
-                HytaleVillager.logger().atInfo().log("NPC with ID " + npcId + " not found.");
-            }
-
-            return CompletableFuture.completedFuture(null);
+            return NpcUtils.getNpcEntityByIdAsync(npcId).thenAccept(npcEntity -> {
+                if (npcEntity != null) {
+                    commandContext.sender().sendMessage(Message.raw("Found NPC with ID: " + npcId));
+                    HytaleVillager.logger().atInfo().log("Found NPC with ID: " + npcId);
+                } else {
+                    commandContext.sender().sendMessage(Message.raw("NPC with ID " + npcId + " not found."));
+                    HytaleVillager.logger().atInfo().log("NPC with ID " + npcId + " not found.");
+                }
+            });
         }
     }
 }
