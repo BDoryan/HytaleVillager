@@ -1,10 +1,27 @@
+$C = "../Common.ui";
+
 Group #Group {
   LayoutMode: Top;
+  Padding: (Bottom: 8);
 
-  Label #Name {
-    Style: (RenderBold: true);
+  Group {
+    LayoutMode: Left;
+    Label #Name {
+      FlexWeight: 1;
+      Style: (RenderBold: true);
+    }
+    Label #Balance { }
   }
 
-  Label #Balance {
+  Group {
+    LayoutMode: Left;
+    Spacing: 6;
+
+    $C.@SmallSecondaryTextButton #DetailsButton { @Text = "Details"; }
+    $C.@SmallSecondaryTextButton #DepositButton { @Text = "Deposit"; }
+    $C.@SmallSecondaryTextButton #WithdrawButton { @Text = "Withdraw"; }
+    $C.@SmallSecondaryTextButton #CreateCheckButton { @Text = "Create Check"; }
+    $C.@SmallSecondaryTextButton #DepositCheckButton { @Text = "Deposit Check"; }
+    $C.@SmallSecondaryTextButton #CloseButton { @Text = "Close"; }
   }
 }

@@ -7,25 +7,80 @@ $C.@Container {
 
   #Title {
     Group {
-      $C.@Title {
-        @Text = "Bank Accounts";
+      LayoutMode: Left;
+      $C.@Title { @Text = "Bank"; }
+      $C.@SmallSecondaryTextButton #ManageBanksButton {
+        @Text = "Manage Banks";
+        @Anchor = (Left: 16);
       }
     }
   }
 
   #Content {
-    LayoutMode: Top;
+    LayoutMode: Left;
+    Padding: (Full: 16);
 
-    Group {
-      Label #BankName {
+    Group #LeftPane {
+      Anchor: (Width: 520);
+      LayoutMode: Top;
+
+      Group {
+        LayoutMode: Left;
+        Label #BankName { Style: (RenderBold: true); }
+      }
+
+      Group {
+        Anchor: (Top: 8, Bottom: 8);
+        Label { Text: "Open a new account"; Style: (RenderBold: true); }
+      }
+
+      $C.@TextField #NewAccountName {
+        @Anchor = (Left: 0, Bottom: 8);
+      }
+
+      $C.@SmallSecondaryTextButton #OpenAccountButton {
+        @Text = "Open Account";
+      }
+
+      Group { Anchor: (Top: 12, Bottom: 6); }
+
+      Label {
+        Text: "Amount for deposits, withdrawals, and checks";
         Style: (RenderBold: true);
+      }
+
+      $C.@TextField #Amount {
+        @Anchor = (Left: 0, Bottom: 8);
+      }
+
+      Group #AccountList {
+        FlexWeight: 1;
+        LayoutMode: TopScrolling;
+        ScrollbarStyle: $C.@DefaultScrollbarStyle;
       }
     }
 
-    Group #AccountList {
+    Group #RightPane {
       FlexWeight: 1;
-      LayoutMode: TopScrolling;
-      ScrollbarStyle: $C.@DefaultScrollbarStyle;
+      LayoutMode: Top;
+      Anchor: (Left: 16);
+
+      Label #SelectedAccountName {
+        Style: (RenderBold: true);
+      }
+
+      Label #SelectedBalance { }
+
+      Group {
+        Anchor: (Top: 8, Bottom: 8);
+        Label { Text: "Transactions"; Style: (RenderBold: true); }
+      }
+
+      Group #TransactionList {
+        FlexWeight: 1;
+        LayoutMode: TopScrolling;
+        ScrollbarStyle: $C.@DefaultScrollbarStyle;
+      }
     }
   }
 }

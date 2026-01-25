@@ -17,7 +17,9 @@ import hytale.doryanbessiere.fr.villager.dto.economy.bank.BankData;
 import hytale.doryanbessiere.fr.villager.dto.economy.bank.BankType;
 import hytale.doryanbessiere.fr.villager.exceptions.bank.BankNameAlreadyExistsException;
 import hytale.doryanbessiere.fr.villager.exceptions.bank.BankNotFoundException;
+import hytale.doryanbessiere.fr.villager.pages.BankManagementPage;
 import hytale.doryanbessiere.fr.villager.services.bank.BankService;
+import hytale.doryanbessiere.fr.utils.PlayerUtils;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.jspecify.annotations.NonNull;
 
@@ -46,6 +48,7 @@ public class BankCommand extends AbstractCommandCollection {
         this.addSubCommand(new BankInfoCommand());
         this.addSubCommand(new BankCreateCommand());
         this.addSubCommand(new BankDeleteCommand());
+        this.addSubCommand(new BankUiCommand());
 
         // Account commands
         this.addSubCommand(new BankAccountCommand());
@@ -174,6 +177,28 @@ public class BankCommand extends AbstractCommandCollection {
                 );
                 sender.sendMessage(Message.raw("Invalid bank type. Use " + enumerationsString + "."));
             }
+            return CompletableFuture.completedFuture(null);
+        }
+    }
+
+    class BankUiCommand extends AbstractAsyncPlayerCommand {
+
+        public BankUiCommand() {
+            super("ui", "Open the bank management interface");
+        }
+
+        @Override
+        protected @NonNull CompletableFuture<Void> executeAsync(@NonNull CommandContext commandContext,
+                                                               @NonNull Store<EntityStore> store,
+                                                               @NonNull Ref<EntityStore> ref,
+                                                               @NonNull PlayerRef playerRef,
+                                                               @NonNull World world) {
+            var player = PlayerUtils.getPlayer(playerRef);
+            if (player == null) {
+                commandContext.sender().sendMessage(Message.raw("Unable to open the bank management interface right now."));
+                return CompletableFuture.completedFuture(null);
+            }
+            player.getPageManager().openCustomPage(ref, store, new BankManagementPage(playerRef));
             return CompletableFuture.completedFuture(null);
         }
     }
