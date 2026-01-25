@@ -11,7 +11,6 @@ import hytale.doryanbessiere.fr.villager.commands.debug.DebugCommand;
 import hytale.doryanbessiere.fr.villager.commands.money.MoneyCommand;
 import hytale.doryanbessiere.fr.villager.components.BankLinkComponent;
 import hytale.doryanbessiere.fr.villager.listeners.PlayerConnectionListener;
-import hytale.doryanbessiere.fr.villager.pages.BankAccountsPage;
 import hytale.doryanbessiere.fr.villager.pages.BankAccountsPageSupplier;
 import hytale.doryanbessiere.fr.utils.event.EventListener;
 
@@ -61,6 +60,6 @@ public class HytaleVillager extends JavaPlugin {
     private void registerBankInteractions() {
         logger.atInfo().log("Registering bank interactions");
         OpenCustomUIInteraction.registerCustomPageSupplier(this,
-                BankAccountsPage.class, "BankAccounts", new BankAccountsPageSupplier());
+                BankAccountsPageSupplier.class, "BankAccounts", new BankAccountsPageSupplier());
     }
 }

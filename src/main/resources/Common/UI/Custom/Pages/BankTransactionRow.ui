@@ -1,0 +1,12 @@
+$C = "../Common.ui";
+
+Group #Group {
+  LayoutMode: Left;
+  Padding: (Bottom: 6);
+
+  Label #TransactionId {
+    FlexWeight: 1;
+  }
+
+  Label #TransactionAmount { }
+}

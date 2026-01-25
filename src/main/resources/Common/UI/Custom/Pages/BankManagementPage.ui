@@ -1,0 +1,62 @@
+$C = "../Common.ui";
+
+$C.@PageOverlay {}
+
+$C.@Container {
+  Anchor: (Width: 1100, Height: 720);
+
+  #Title {
+    Group {
+      $C.@Title { @Text = "Bank Management"; }
+    }
+  }
+
+  #Content {
+    LayoutMode: Left;
+    Padding: (Full: 16);
+
+    Group #LeftPane {
+      Anchor: (Width: 620);
+      LayoutMode: Top;
+
+      Label { Text: "Create a bank"; Style: (RenderBold: true); }
+
+      $C.@TextField #CreateName {
+        @Anchor = (Left: 0, Bottom: 6);
+      }
+
+      $C.@TextField #CreateType {
+        @Anchor = (Left: 0, Bottom: 6);
+      }
+
+      Group {
+        LayoutMode: Left;
+        $C.@SmallSecondaryTextButton #CreateButton { @Text = "Create Bank"; }
+        $C.@SmallSecondaryTextButton #RefreshButton { @Text = "Refresh"; }
+      }
+
+      Group { Anchor: (Top: 12, Bottom: 8); }
+
+      Label { Text: "Banks"; Style: (RenderBold: true); }
+
+      Group #BankList {
+        FlexWeight: 1;
+        LayoutMode: TopScrolling;
+        ScrollbarStyle: $C.@DefaultScrollbarStyle;
+      }
+    }
+
+    Group #RightPane {
+      FlexWeight: 1;
+      LayoutMode: Top;
+      Anchor: (Left: 16);
+
+      Label #SelectedBankName { Style: (RenderBold: true); }
+      Label #SelectedBankType { }
+      Label #SelectedBankAccounts { }
+      Label #SelectedBankBalance { }
+    }
+  }
+}
+
+$C.@BackButton {}

@@ -15,7 +15,6 @@ Group #Group {
 
   Group {
     LayoutMode: Left;
-    Spacing: 6;
 
     $C.@SmallSecondaryTextButton #DetailsButton { @Text = "Details"; }
     $C.@SmallSecondaryTextButton #DepositButton { @Text = "Deposit"; }

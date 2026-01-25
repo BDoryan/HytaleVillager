@@ -1,0 +1,25 @@
+$C = "../Common.ui";
+
+Group #Group {
+  LayoutMode: Top;
+  Padding: (Bottom: 8);
+
+  Group {
+    LayoutMode: Left;
+    Label #Name {
+      FlexWeight: 1;
+      Style: (RenderBold: true);
+    }
+    Label #Type { }
+    Label #Accounts { Anchor: (Left: 12); }
+    Label #Balance { Anchor: (Left: 12); }
+  }
+
+  Group {
+    LayoutMode: Left;
+
+    $C.@SmallSecondaryTextButton #InfoButton { @Text = "Info"; }
+    $C.@SmallSecondaryTextButton #OpenButton { @Text = "Accounts"; }
+    $C.@SmallSecondaryTextButton #DeleteButton { @Text = "Delete"; }
+  }
+}

@@ -1,16 +1,16 @@
 package hytale.doryanbessiere.fr.villager.pages;
 
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 import com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCustomUIPage;
+import com.hypixel.hytale.server.core.ui.builder.EventData;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.hypixel.hytale.component.Ref;
-import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.server.core.ui.builder.EventData;
 import hytale.doryanbessiere.fr.villager.dto.economy.bank.BankData;
 import hytale.doryanbessiere.fr.villager.dto.economy.bank.account.BankAccountData;
 import hytale.doryanbessiere.fr.villager.dto.economy.bank.account.BankTransactionData;
@@ -55,8 +55,9 @@ public class BankAccountsPage extends InteractiveCustomUIPage<BankAccountsPageEv
         } catch (BankException e) {
             return;
         }
-        int index = 0;
+
         commandBuilder.clear("#AccountList");
+        int index = 0;
         for (BankAccountData account : accounts) {
             if (!account.getOwnerId().equals(playerRef.getUuid())) {
                 continue;
@@ -155,7 +156,7 @@ public class BankAccountsPage extends InteractiveCustomUIPage<BankAccountsPageEv
         for (BankTransactionData transaction : transactions) {
             String selector = "#TransactionList[" + index + "]";
             commandBuilder.append("#TransactionList", "Pages/BankTransactionRow.ui");
-            commandBuilder.set(selector + " #TransactionId.Text", transaction.getTransactionId());
+            commandBuilder.set(selector + " #TransactionId.Text", transaction.getTransactionId().toString());
             commandBuilder.set(selector + " #TransactionAmount.Text", transaction.getAmount() + " coins");
             index++;
         }
@@ -205,6 +206,10 @@ public class BankAccountsPage extends InteractiveCustomUIPage<BankAccountsPageEv
     }
 
     private void handleDeposit(String accountName, long amount) {
+        if (accountName.isEmpty()) {
+            playerRef.sendMessage(Message.raw("Account name is required."));
+            return;
+        }
         if (!validateAmount(amount)) {
             return;
         }
@@ -224,6 +229,10 @@ public class BankAccountsPage extends InteractiveCustomUIPage<BankAccountsPageEv
     }
 
     private void handleWithdraw(String accountName, long amount) {
+        if (accountName.isEmpty()) {
+            playerRef.sendMessage(Message.raw("Account name is required."));
+            return;
+        }
         if (!validateAmount(amount)) {
             return;
         }
@@ -243,6 +252,10 @@ public class BankAccountsPage extends InteractiveCustomUIPage<BankAccountsPageEv
     }
 
     private void handleCreateCheck(String accountName, long amount) {
+        if (accountName.isEmpty()) {
+            playerRef.sendMessage(Message.raw("Account name is required."));
+            return;
+        }
         if (!validateAmount(amount)) {
             return;
         }
@@ -262,6 +275,10 @@ public class BankAccountsPage extends InteractiveCustomUIPage<BankAccountsPageEv
     }
 
     private void handleDepositCheck(String accountName) {
+        if (accountName.isEmpty()) {
+            playerRef.sendMessage(Message.raw("Account name is required."));
+            return;
+        }
         var player = PlayerUtils.getPlayer(playerRef);
         if (player == null || player.getInventory() == null) {
             playerRef.sendMessage(Message.raw("Unable to access your inventory."));
