@@ -1,66 +1,66 @@
 # Hytale Villager
 
-## Présentation
+## Overview
 
-Plugin Hytale orienté économie/village avec monnaie joueur, banques, comptes bancaires et chèques bancaires. Le plugin stocke tout en JSON local et crée des PNJ de banque au moment de la création.
+Hytale plugin focused on economy and villages, featuring player currency, banks, bank accounts, and bank checks. The plugin stores all data in local JSON files and spawns bank NPCs upon creation.
 
-## Fonctionnalités
+## Features
 
-* Gestion du solde joueur (`/money`, mise à jour admin).
-* Création de banques (`VILLAGE` ou `GOVERNMENT`) avec PNJ associé.
-* Comptes bancaires par joueur (ouverture, fermeture, détails).
-* Transactions de dépôt/retrait et historique par compte.
-* Chèques bancaires (création et dépôt via item).
-* Stockage persistant en JSON (fichiers locaux).
-* Commandes de debug PNJ.
+* Player balance management (`/money`, admin updates).
+* Bank creation (`VILLAGE` or `GOVERNMENT`) with associated NPC.
+* Bank accounts per player (open, close, details).
+* Deposit/withdraw transactions with account history.
+* Bank checks (creation and deposit via item).
+* Persistent JSON storage (local files).
+* NPC debug commands.
 
-## Commandes
+## Commands
 
-### Monnaie
+### Currency
 
-* `/money` : affiche votre solde.
-* `/money <player>` : affiche le solde d’un autre joueur.
-* `/money update <amount(+10/-10/500)> <player>` : ajoute/retire ou fixe un solde.
+* `/money`: displays your balance.
+* `/money <player>`: displays another player’s balance.
+* `/money update <amount(+10/-10/500)> <player>`: add/remove or set a balance.
 
-### Banque
+### Bank
 
-* `/bank info <name>` : affiche les informations d’une banque.
-* `/bank create <name> <type>` : crée une banque (`VILLAGE` ou `GOVERNMENT`).
-* `/bank delete <name>` : supprime une banque et son PNJ.
+* `/bank info <name>`: displays bank information.
+* `/bank create <name> <type>`: creates a bank (`VILLAGE` or `GOVERNMENT`).
+* `/bank delete <name>`: deletes a bank and its NPC.
 
-### Comptes bancaires
+### Bank Accounts
 
-* `/bank account list <bankName>` : liste vos comptes dans une banque.
-* `/bank account open <bankName> <accountName>` : ouvre un compte.
-* `/bank account close <bankName> <accountName>` : ferme un compte (solde à 0 requis).
-* `/bank account details <bankName> <accountName>` : détails + transactions.
+* `/bank account list <bankName>`: lists your accounts in a bank.
+* `/bank account open <bankName> <accountName>`: opens an account.
+* `/bank account close <bankName> <accountName>`: closes an account (requires balance = 0).
+* `/bank account details <bankName> <accountName>`: details + transactions.
 
 ### Transactions
 
-* `/bank account transaction deposit <bankName> <accountName> <amount>` : dépôt depuis le portefeuille.
-* `/bank account transaction withdraw <bankName> <accountName> <amount>` : retrait vers le portefeuille.
+* `/bank account transaction deposit <bankName> <accountName> <amount>`: deposit from wallet.
+* `/bank account transaction withdraw <bankName> <accountName> <amount>`: withdraw to wallet.
 
-### Chèques bancaires
+### Bank Checks
 
-* `/bank account bankcheck create <bankName> <accountName> <amount>` : crée un chèque bancaire (item).
-* `/bank account bankcheck deposit <bankName> <accountName>` : dépose le chèque en main.
+* `/bank account bankcheck create <bankName> <accountName> <amount>`: creates a bank check (item).
+* `/bank account bankcheck deposit <bankName> <accountName>`: deposits the held check.
 
 ### Debug
 
-* `/debug npc spawn` : fait apparaître un PNJ de debug.
-* `/debug npc get <npcId>` : retrouve un PNJ par UUID.
+* `/debug npc spawn`: spawns a debug NPC.
+* `/debug npc get <npcId>`: retrieves an NPC by UUID.
 
-## Prérequis
+## Prerequisites
 
-* Java 25 (toolchain configurée).
-* Gradle (via `./gradlew`).
-* Assets Hytale disponibles pour la compilation.
+* Java 25 (configured toolchain)
+* Gradle (via `./gradlew`)
+* Hytale assets available for compilation
 
-  * Windows : `%APPDATA%/Hytale/install/release/package/game/latest/Assets.zip`
-  * Linux (Flatpak) : `~/.var/app/com.hypixel.HytaleLauncher/data/Hytale/install/release/package/game/latest/Assets.zip`
-  * Surcharge via `gradle-local.properties` ou `gradle.properties` : `hytaleAssetsPath=<path>`
+  * Windows: `%APPDATA%/Hytale/install/release/package/game/latest/Assets.zip`
+  * Linux (Flatpak): `~/.var/app/com.hypixel.HytaleLauncher/data/Hytale/install/release/package/game/latest/Assets.zip`
+  * Override via `gradle-local.properties` or `gradle.properties`: `hytaleAssetsPath=<path>`
 
-## Commandes techniques
+## Technical Commands
 
 ```bash
 ./gradlew build
@@ -68,51 +68,51 @@ Plugin Hytale orienté économie/village avec monnaie joueur, banques, comptes b
 ./gradlew syncAssets
 ```
 
-Notes :
+Notes:
 
-* `runServer` peut s’appeler `server` selon la version du plugin Hytale.
-* `syncAssets` copie les assets générés par le serveur vers `src/main/resources` (manifest exclu).
-* Pour forcer un dossier serveur local : `hytaleServerPath=<path>` dans `gradle-local.properties` ou `gradle.properties`.
+* `runServer` may be named `server` depending on the Hytale plugin version.
+* `syncAssets` copies assets generated by the server into `src/main/resources` (manifest excluded).
+* To force a local server directory: set `hytaleServerPath=<path>` in `gradle-local.properties` or `gradle.properties`.
 
-## Déploiement (optionnel)
+## Deployment (optional)
 
 ```bash
 ./gradlew deployJar
 ./gradlew deployJarAndRestart
 ```
 
-Configuration requise dans `gradle.properties` ou `gradle-local.properties` :
+Required configuration in `gradle.properties` or `gradle-local.properties`:
 
 * `deployHost`, `deployUser`, `deployPort`, `deployPath`, `deployRestartCmd`
 
-## Structure du code
+## Code Structure
 
 ```
 src/main/java/hytale/doryanbessiere/fr/villager
-├── HytaleVillager.java           # Point d’entrée du plugin
-├── commands/                     # Commandes /money, /bank, /debug
-├── components/                   # Composants (BankLinkComponent)
-├── dto/                          # Objets de données (joueurs, banques, comptes)
-├── exceptions/                   # Exceptions métier
+├── HytaleVillager.java           # Plugin entry point
+├── commands/                     # /money, /bank, /debug commands
+├── components/                   # Components (BankLinkComponent)
+├── dto/                          # Data objects (players, banks, accounts)
+├── exceptions/                   # Business exceptions
 ├── items/                        # Items (BankCheck)
-├── listeners/                    # Événements joueurs (connexion/déconnexion)
-├── repository/                   # Interfaces + adaptateur fichiers
-├── services/                     # Logique métier (monnaie, banques)
-└── utils/                        # Stockage JSON, événements, helpers
+├── listeners/                    # Player events (login/logout)
+├── repository/                   # Interfaces + file adapter
+├── services/                     # Business logic (currency, banks)
+└── utils/                        # JSON storage, events, helpers
 ```
 
-## Stockage des données
+## Data Storage
 
-Les données sont stockées localement en JSON :
+Data is stored locally in JSON:
 
 * `hytale-villager/players/<uuid>.json`
 * `hytale-villager/banks/<bankId>/metadata.json`
 * `hytale-villager/banks/<bankId>/accounts/<accountId>.json`
 
-## Ressources
+## Resources
 
-* `src/main/resources/manifest.json` : template du manifest (rempli via `gradle.properties`).
-* `src/main/resources/Server/Item/Items/BankCheck.json` : item de chèque bancaire.
-* `src/main/resources/Server/NPC/Roles/Custom/LookAtMe.json` : rôle PNJ custom.
-* `src/main/resources/Server/NPC/Roles/Intelligent/Passive/Klops_Merchant.json` : rôle PNJ marchand.
-* `src/main/resources/Server.Languages.en-US/villager.lang` : langue.
+* `src/main/resources/manifest.json`: manifest template (filled via `gradle.properties`)
+* `src/main/resources/Server/Item/Items/BankCheck.json`: bank check item
+* `src/main/resources/Server/NPC/Roles/Custom/LookAtMe.json`: custom NPC role
+* `src/main/resources/Server/NPC/Roles/Intelligent/Passive/Klops_Merchant.json`: merchant NPC role
+* `src/main/resources/Server.Languages.en-US/villager.lang`: language file
